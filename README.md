@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="./docs/_static/veriside_logo.png" alt="VeriSide Logo" width="300"/>
+  <img src="./docs/_static/veriside_logo.png" alt="VeriSide Logo" width="50"/>
 </p>
 
-# VeriSide
+#  
 
 **VeriSide** is a customized extension of [Verilator](https://verilator.org/), the fastest open-source Verilog/SystemVerilog simulator, designed specifically for **Power Side-Channel (PSC) Leakage Assessment at the RTL Level**.
 
@@ -42,7 +42,7 @@ VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming We
 
 ---
 
-## 📈 Performance Comparison
+## 📈 Performance Comparison 
 
 | Metric                | VeriSide | Verilator + VCD |
 |-----------------------|----------|-----------------|
@@ -57,22 +57,15 @@ VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming We
 
 If you use VeriSide in your research or projects, please **cite the following publication**:
 
-> B. Farnaghinejad, A. Porsia, A. Ruospo, E. Sanchez, and S. Di Carlo,  
-> "VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level,"  
+> B. Farnaghinejad, A. Porsia, A. Ruospo, A. Savino, S. Di Carlo, and E. Sanchez  
+> "VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level"  
 > *2024 IEEE 33rd Asian Test Symposium (ATS)*, 2024, pp. 1-6.  
 > doi: [10.1109/ATS60064.2024.00012](https://ieeexplore.ieee.org/document/10963943)
 
 **BibTeX:**
 ```bibtex
-@inproceedings{farnaghinejad2024veriside,
-  title={VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level},
-  author={Farnaghinejad, Behnam and Porsia, Antonio and Ruospo, Annachiara and Sanchez, Ernesto and Di Carlo, Stefano},
-  booktitle={2024 IEEE 33rd Asian Test Symposium (ATS)},
-  pages={1--6},
-  year={2024},
-  organization={IEEE},
-  doi={10.1109/ATS60064.2024.00012}
-}
+B. Farnaghinejad, A. Porsia, A. Ruospo, A. Savino, S. Di Carlo, and E. Sanchez, “Late Contribution: VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level,” in 2025 IEEE 26th Latin American Test Symposium (LATS), Mar. 2025, pp. 1–2. doi: 10.1109/LATS65346.2025.10963943.
+
 ```
 
 You can also access the paper here:  
