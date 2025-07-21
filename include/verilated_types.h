@@ -1012,8 +1012,8 @@ struct VlUnpacked final {
 
     // METHODS
     // Raw access
-    WData* data() { return &m_storage[0]; }
-    const WData* data() const { return &m_storage[0]; }
+    WData* data() { return (WData*)&m_storage[0]; }
+    const WData* data() const { return (const WData*)&m_storage[0]; }
 
     T_Value& operator[](size_t index) { return m_storage[index]; }
     const T_Value& operator[](size_t index) const { return m_storage[index]; }

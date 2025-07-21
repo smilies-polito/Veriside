@@ -1,156 +1,93 @@
-.. Github doesn't render images unless absolute URL
-.. Do not know of a conditional tag, "only: github" nor "github display" works
+<p align="center">
+  <img src="./docs/_static/veriside_logo.png" alt="VeriSide Logo" width="300"/>
+</p>
 
-.. image:: https://img.shields.io/badge/License-LGPL%20v3-blue.svg
-    :target: https://www.gnu.org/licenses/lgpl-3.0]
-.. image:: https://img.shields.io/badge/License-Artistic%202.0-0298c3.svg
-    :target: https://opensource.org/licenses/Artistic-2.0
-.. image:: https://repology.org/badge/tiny-repos/verilator.svg?header=distro%20packages
-    :target: https://repology.org/project/verilator/versions
-.. image:: https://api.codacy.com/project/badge/Grade/fa78caa433c84a4ab9049c43e9debc6f
-    :target: https://www.codacy.com/gh/verilator/verilator
-.. image:: https://codecov.io/gh/verilator/verilator/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/verilator/verilator
-.. image:: https://github.com/verilator/verilator/workflows/build/badge.svg
-    :target: https://github.com/verilator/verilator/actions?query=workflow%3Abuild
+# VeriSide
 
+**VeriSide** is a customized extension of [Verilator](https://verilator.org/), the fastest open-source Verilog/SystemVerilog simulator, designed specifically for **Power Side-Channel (PSC) Leakage Assessment at the RTL Level**.
 
-Welcome to Verilator
-====================
+For Verilator's official documentation, tutorials, and usage, please refer to:
+- https://verilator.org/
 
-.. list-table::
+---
 
-   * - **Welcome to Verilator, the fastest Verilog/SystemVerilog simulator.**
-        * Accepts Verilog or SystemVerilog
-        * Performs lint code-quality checks
-        * Compiles into multithreaded C++, or SystemC
-        * Creates XML to front-end your own tools
-     - |Logo|
-   * - |verilator multithreaded performance|
-     - **Fast**
-        * Outperforms many closed-source commercial simulators
-        * Single- and multithreaded output models
-   * - **Widely Used**
-        * Wide industry and academic deployment
-        * Out-of-the-box support from Arm and RISC-V vendor IP
-     - |verilator usage|
-   * - |verilator community|
-     - **Community Driven & Openly Licensed**
-        * Guided by the `CHIPS Alliance`_ and `Linux Foundation`_
-        * Open, and free as in both speech and beer
-        * More simulation for your verification budget
-   * - **Commercial Support Available**
-        * Commercial support contracts
-        * Design support contracts
-        * Enhancement contracts
-     - |verilator support|
+## 🚀 What is VeriSide?
 
+VeriSide is based on **Verilator v5.008** and introduces enhancements to enable efficient, scalable, and direct leakage assessment of RTL designs, particularly suited for pre-silicon security evaluation of:
+- Cryptographic accelerators
+- AI models
+- SoCs handling sensitive data
 
-What Verilator Does
-===================
+VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming Weight (HW)** data during simulation, avoiding the need for post-simulation VCD or SAIF parsing, which is resource-heavy and slow for large designs.
 
-Verilator is invoked with parameters similar to GCC or Synopsys's VCS.  It
-"Verilates" the specified Verilog or SystemVerilog code by reading it,
-performing lint checks, and optionally inserting assertion checks and
-coverage-analysis points. It outputs single- or multithreaded .cpp and .h
-files, the "Verilated" code.
+---
 
-These Verilated C++/SystemC files are then compiled by a C++ compiler
-(gcc/clang/MSVC++), optionally along with a user's own C++/SystemC wrapper
-file to instantiate the Verilated model. Executing the resulting executable
-performs the design simulation. Verilator also supports linking Verilated
-generated libraries, optionally encrypted, into other simulators.
+## 🔍 Key Features in VeriSide V1.0
+- **Inline Leakage Tracing:**  
+  Direct generation of `.side` files capturing HD/HW data per simulation, eliminating VCD generation and parsing.
 
-Verilator may not be the best choice if you are expecting a full-featured
-replacement for a closed-source Verilog simulator, needs SDF annotation,
-mixed-signal simulation, or are doing a quick class project (we recommend
-`Icarus Verilog`_ for classwork.)  However, if you are looking for a path
-to migrate SystemVerilog to C++/SystemC, or want high-speed simulation of
-synthesizable designs containing limited verification constructs, Verilator
-is the tool for you.
+- **Trigger and Instance Specification:**  
+  Target specific RTL instances and trigger signals for focused analysis.
 
+- **Resource Efficiency:**  
+  - 99% reduction in disk usage compared to traditional VCD-based approaches.
+  - Zero post-simulation RAM overhead for leakage data extraction.
+  - Immediate trace availability post simulation.
 
-Performance
-===========
+- **Parallel Trace Collection:**  
+  Retains Verilator's multi-threaded simulation capabilities while embedding side-channel analysis.
 
-Verilator does not directly translate Verilog HDL to C++ or SystemC. Rather,
-Verilator compiles your code into a much faster optimized and optionally
-thread-partitioned model, which is in turn wrapped inside a C++/SystemC
-module. The results are a compiled Verilog model that executes even on a
-single-thread over 10x faster than standalone SystemC, and on a single
-thread is about 100 times faster than interpreted Verilog simulators such
-as `Icarus Verilog`_. Another 2-10x speedup might be gained from
-multithreading (yielding 200-1000x total over interpreted simulators).
+- **Validated Use-Case:**  
+  Case studies on CVA6 RISC-V core with a cryptographic accelerator via the **CV-X-IF interface** demonstrate VeriSide’s efficacy.
 
-Verilator has typically similar or better performance versus the
-closed-source Verilog simulators (Carbon Design Systems Carbonator,
-Modelsim/Questa, Cadence Incisive/NC-Verilog, Synopsys VCS, VTOC, and
-Pragmatic CVer/CVC). But, Verilator is open-sourced, so you can spend on
-computes rather than licenses. Thus, Verilator gives you the best
-cycles/dollar.
+---
 
+## 📈 Performance Comparison
 
-Installation & Documentation
-============================
+| Metric                | VeriSide | Verilator + VCD |
+|-----------------------|----------|-----------------|
+| Disk Usage            | ~3-4 MB  | ~5-6 GB         |
+| RAM for Extraction    | None     | Up to 46 GB     |
+| Extraction Time       | Immediate| ~600-750 seconds|
+| CPU Time              | ~86-110s | ~93-121s        |
 
-For more information:
+---
 
-- `Verilator installation and package directory structure
-  <https://verilator.org/install>`_
+## 📖 Citation
 
-- `Verilator manual (HTML) <https://verilator.org/verilator_doc.html>`_,
-  or `Verilator manual (PDF) <https://verilator.org/verilator_doc.pdf>`_
+If you use VeriSide in your research or projects, please **cite the following publication**:
 
-- `Subscribe to Verilator announcements
-  <https://github.com/verilator/verilator-announce>`_
+> B. Farnaghinejad, A. Porsia, A. Ruospo, E. Sanchez, and S. Di Carlo,  
+> "VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level,"  
+> *2024 IEEE 33rd Asian Test Symposium (ATS)*, 2024, pp. 1-6.  
+> doi: [10.1109/ATS60064.2024.00012](https://ieeexplore.ieee.org/document/10963943)
 
-- `Verilator forum <https://verilator.org/forum>`_
+**BibTeX:**
+```bibtex
+@inproceedings{farnaghinejad2024veriside,
+  title={VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level},
+  author={Farnaghinejad, Behnam and Porsia, Antonio and Ruospo, Annachiara and Sanchez, Ernesto and Di Carlo, Stefano},
+  booktitle={2024 IEEE 33rd Asian Test Symposium (ATS)},
+  pages={1--6},
+  year={2024},
+  organization={IEEE},
+  doi={10.1109/ATS60064.2024.00012}
+}
+```
 
-- `Verilator issues <https://verilator.org/issues>`_
+You can also access the paper here:  
+👉 [https://ieeexplore.ieee.org/document/10963943](https://ieeexplore.ieee.org/document/10963943)
 
+---
 
-Support
-=======
+## 📬 Contributions & Support
 
-Verilator is a community project, guided by the `CHIPS Alliance`_ under the
-`Linux Foundation`_.
+We welcome contributions, feature requests, and bug reports!  
+Please open an **issue** on this repository.
 
-We appreciate and welcome your contributions in whatever form; please see
-`Contributing to Verilator
-<https://github.com/verilator/verilator/blob/master/docs/CONTRIBUTING.rst>`_.
-Thanks to our `Contributors and Sponsors
-<https://verilator.org/guide/latest/contributors.html>`_.
+---
 
-Verilator also supports and encourages commercial support models and
-organizations; please see `Verilator Commercial Support
-<https://verilator.org/verilator_commercial_support>`_.
-
-
-Related Projects
-================
-
-- `GTKwave <http://gtkwave.sourceforge.net/>`_ - Waveform viewer for
-  Verilator traces.
-
-- `Icarus Verilog`_ - Icarus is a full-featured interpreted Verilog
-  simulator. If Verilator does not support your needs, perhaps Icarus may.
-
-
-Open License
-============
-
-Verilator is Copyright 2003-2023 by Wilson Snyder. (Report bugs to
-`Verilator Issues <https://verilator.org/issues>`_.)
-
-Verilator is free software; you can redistribute it and/or modify it under
-the terms of either the GNU Lesser General Public License Version 3 or the
-Perl Artistic License Version 2.0. See the documentation for more details.
-
-.. _CHIPS Alliance: https://chipsalliance.org
-.. _Icarus Verilog: http://iverilog.icarus.com
-.. _Linux Foundation: https://www.linuxfoundation.org
-.. |Logo| image:: https://www.veripool.org/img/verilator_256_200_min.png
-.. |verilator multithreaded performance| image:: https://www.veripool.org/img/verilator_multithreaded_performance_bg-min.png
-.. |verilator usage| image:: https://www.veripool.org/img/verilator_usage_400x200-min.png
-.. |verilator community| image:: https://www.veripool.org/img/verilator_community_400x125-min.png
-.. |verilator support| image:: https://www.veripool.org/img/verilator_support_400x125-min.png
+## 📜 License
+VeriSide inherits Verilator’s licensing:
+- [LGPL v3 License](https://www.gnu.org/licenses/lgpl-3.0)
+- [Perl Artistic License 2.0](https://opensource.org/licenses/Artistic-2.0)
