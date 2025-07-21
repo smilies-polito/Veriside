@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/_static/veriside_logo.png" alt="VeriSide Logo" width="50"/>
+  <img src="./docs/_static/veriside_logo.png" alt="VeriSide Logo" width="70"/>
 </p>
 
 #  
@@ -13,10 +13,7 @@ For Verilator's official documentation, tutorials, and usage, please refer to:
 
 ## 🚀 What is VeriSide?
 
-VeriSide is based on **Verilator v5.008** and introduces enhancements to enable efficient, scalable, and direct leakage assessment of RTL designs, particularly suited for pre-silicon security evaluation of:
-- Cryptographic accelerators
-- AI models
-- SoCs handling sensitive data
+VeriSide v1.0 is based on **Verilator v5.008** and introduces enhancements to enable efficient, scalable, and direct leakage assessment of RTL designs, particularly suited for pre-silicon security evaluation.
 
 VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming Weight (HW)** data during simulation, avoiding the need for post-simulation VCD or SAIF parsing, which is resource-heavy and slow for large designs.
 
@@ -37,12 +34,10 @@ VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming We
 - **Parallel Trace Collection:**  
   Retains Verilator's multi-threaded simulation capabilities while embedding side-channel analysis.
 
-- **Validated Use-Case:**  
-  Case studies on CVA6 RISC-V core with a cryptographic accelerator via the **CV-X-IF interface** demonstrate VeriSide’s efficacy.
-
 ---
 
 ## 📈 Performance Comparison 
+Case studies on CVA6 RISC-V core with a cryptographic accelerator via the CV-X-IF interface demonstrate VeriSide’s efficacy.
 
 | Metric                | VeriSide | Verilator + VCD |
 |-----------------------|----------|-----------------|
@@ -57,12 +52,6 @@ VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming We
 
 If you use VeriSide in your research or projects, please **cite the following publication**:
 
-> B. Farnaghinejad, A. Porsia, A. Ruospo, A. Savino, S. Di Carlo, and E. Sanchez  
-> "VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level"  
-> *2024 IEEE 33rd Asian Test Symposium (ATS)*, 2024, pp. 1-6.  
-> doi: [10.1109/ATS60064.2024.00012](https://ieeexplore.ieee.org/document/10963943)
-
-**BibTeX:**
 ```bibtex
 B. Farnaghinejad, A. Porsia, A. Ruospo, A. Savino, S. Di Carlo, and E. Sanchez, “Late Contribution: VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level,” in 2025 IEEE 26th Latin American Test Symposium (LATS), Mar. 2025, pp. 1–2. doi: 10.1109/LATS65346.2025.10963943.
 
@@ -81,6 +70,4 @@ Please open an **issue** on this repository.
 ---
 
 ## 📜 License
-VeriSide inherits Verilator’s licensing:
-- [LGPL v3 License](https://www.gnu.org/licenses/lgpl-3.0)
-- [Perl Artistic License 2.0](https://opensource.org/licenses/Artistic-2.0)
+VeriSide inherits Verilator’s licensing.
