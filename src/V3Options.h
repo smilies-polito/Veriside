@@ -312,7 +312,7 @@ private:
     VTimescale  m_timeOverridePrec;  // main switch: --timescale-override
     VTimescale  m_timeOverrideUnit;  // main switch: --timescale-override
     int         m_traceDepth = 0;   // main switch: --trace-depth
-    TraceFormat m_traceFormat;  // main switch: --trace or --trace-fst
+    TraceFormat m_traceFormat;  // main switch: --trace, --trace-fst or --trace-side
     int         m_traceMaxArray = 32;  // main switch: --trace-max-array
     int         m_traceMaxWidth = 256; // main switch: --trace-max-width
     int         m_traceThreads = 0; // main switch: --trace-threads

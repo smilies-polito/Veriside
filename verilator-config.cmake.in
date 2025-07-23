@@ -190,6 +190,10 @@ function(verilate TARGET)
     list(APPEND VERILATOR_ARGS --trace-fst)
   endif()
 
+  if (VERILATE_TRACE_SIDE)
+    list(APPEND VERILATOR_ARGS --trace-side)
+  endif()
+
   if (VERILATE_SYSTEMC)
     list(APPEND VERILATOR_ARGS --sc)
   else()

@@ -495,7 +495,7 @@ $bits, $countbits, $countones, $finish, $isunknown, $onehot, $onehot0, $signed, 
   Generally supported.
 
 $dump/$dumpports and related
-  $dumpfile or $dumpports will create a VCD or FST file (based on
+  $dumpfile or $dumpports will create a VCD, FST or SIDE file (based on
   the :vlopt:`--trace` option given when the model was Verilated). This
   will take effect starting at the next eval() call.  If you have multiple
   Verilated designs under the same C model, this will dump signals
