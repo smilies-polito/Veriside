@@ -839,8 +839,10 @@ void V3Options::notify() {
         // With --trace-fst, --trace-threads implies --threads 1 unless explicitly specified
         if (traceFormat().fst() && traceThreads() && !threads()) m_threads = 1;
 
-        // With --trace, --trace-threads is ignored
+        // With --trace and --trace-side, --trace-threads is ignored
         if (traceFormat().vcd()) m_traceThreads = threads() ? 1 : 0;
+        if (traceFormat().side()) m_traceThreads = threads() ? 1 : 0;
+
     }
 
     UASSERT(!(useTraceParallel() && useTraceOffload()),

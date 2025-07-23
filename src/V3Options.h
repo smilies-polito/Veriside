@@ -133,7 +133,7 @@ inline std::ostream& operator<<(std::ostream& os, const VTimescale& rhs) {
 
 class TraceFormat final {
 public:
-    enum en : uint8_t { VCD = 0, FST } m_e;
+    enum en : uint8_t { VCD = 0, FST, SIDE } m_e;
     // cppcheck-suppress noExplicitConstructor
     constexpr TraceFormat(en _e = VCD)
         : m_e{_e} {}
@@ -142,12 +142,13 @@ public:
     constexpr operator en() const { return m_e; }
     bool fst() const { return m_e == FST; }
     bool vcd() const { return m_e == VCD; }
+    bool side() const { return m_e == SIDE; }
     string classBase() const {
-        static const char* const names[] = {"VerilatedVcd", "VerilatedFst"};
+        static const char* const names[] = {"VerilatedVcd", "VerilatedFst", "VerilatedSide"};
         return names[m_e];
     }
     string sourceName() const VL_MT_SAFE {
-        static const char* const names[] = {"verilated_vcd", "verilated_fst"};
+        static const char* const names[] = {"verilated_vcd", "verilated_fst", "verilated_side"};
         return names[m_e];
     }
 };
@@ -537,7 +538,7 @@ public:
     int traceThreads() const { return m_traceThreads; }
     bool useTraceOffload() const { return trace() && traceFormat().fst() && traceThreads() > 1; }
     bool useTraceParallel() const {
-        return trace() && traceFormat().vcd() && threads() && (threads() > 1 || hierChild() > 1);
+        return trace() && (traceFormat().vcd() || traceFormat().side()) && threads() && (threads() > 1 || hierChild() > 1);
     }
     bool useFstWriterThread() const { return traceThreads() && traceFormat().fst(); }
     unsigned vmTraceThreads() const {

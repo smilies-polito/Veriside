@@ -1314,6 +1314,12 @@ Summary:
    When using :vlopt:`--threads`, VCD tracing is parallelized, using the
    same number of threads as passed to :vlopt:`--threads`.
 
+.. option:: --trace-side
+
+   Enable SIDE waveform tracing in the model. The SIDE format is similar 
+   to VCD format usage, but the output is switching activity rather than
+   signal values. This is useful for power analysis.
+
 .. option:: --trace-coverage
 
    With :vlopt:`--trace` and ``--coverage-*``, enable tracing to include a

@@ -115,6 +115,9 @@ class CMakeEmitter final {
         *of << "# FST Tracing output mode? 0/1 (from --trace-fst)\n";
         cmake_set_raw(*of, name + "_TRACE_FST",
                       (v3Global.opt.trace() && v3Global.opt.traceFormat().fst()) ? "1" : "0");
+        *of << "# Side Tracing output mode? 0/1 (from --trace-side)\n";
+        cmake_set_raw(*of, name + "_TRACE_SIDE",
+                      (v3Global.opt.trace() && v3Global.opt.traceFormat().side()) ? "1" : "0");
 
         *of << "\n### Sources...\n";
         std::vector<string> classes_fast;

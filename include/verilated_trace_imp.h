@@ -588,10 +588,18 @@ void VerilatedTrace<VL_SUB_T, VL_BUF_T>::dump(uint64_t timeui) VL_MT_SAFE_EXCLUD
             // Update time point
             flushBase();
             emitTimeChange(timeui);
+
+            #ifdef VM_TRACE_SIDE
+            emitTimeChangeSide(timeui);
+            #endif
         }
     } else {
         // Update time point
         emitTimeChange(timeui);
+
+        #ifdef VM_TRACE_SIDE
+        emitTimeChangeSide(timeui);
+        #endif
     }
 
     // Run the callbacks
@@ -833,6 +841,9 @@ VerilatedTraceBuffer<VL_BUF_T>::VerilatedTraceBuffer(Trace& owner)
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullBit(uint32_t* oldp, CData newval) {
     const uint32_t code = oldp - m_sigs_oldvalp;
+    #ifdef VM_TRACE_SIDE
+    emitBitSide(code, newval, *oldp);
+    #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
     emitBit(code, newval);
@@ -841,6 +852,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullBit(uint32_t* oldp, CData newval) {
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullEvent(uint32_t* oldp, VlEvent newval) {
     const uint32_t code = oldp - m_sigs_oldvalp;
+    #ifdef VM_TRACE_SIDE
+    emitEventSide(code, newval, *oldp);
+    #endif
     *oldp = 1;  // Do we really store an "event" ?
     emitEvent(code, newval);
 }
@@ -848,6 +862,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullEvent(uint32_t* oldp, VlEvent newval) {
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullCData(uint32_t* oldp, CData newval, int bits) {
     const uint32_t code = oldp - m_sigs_oldvalp;
+    #ifdef VM_TRACE_SIDE
+    emitCDataSide(code, newval, bits, *oldp);
+    #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
     emitCData(code, newval, bits);
@@ -856,6 +873,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullCData(uint32_t* oldp, CData newval, int
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullSData(uint32_t* oldp, SData newval, int bits) {
     const uint32_t code = oldp - m_sigs_oldvalp;
+    #ifdef VM_TRACE_SIDE
+    emitSDataSide(code, newval, bits, *oldp);
+    #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
     emitSData(code, newval, bits);
@@ -864,6 +884,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullSData(uint32_t* oldp, SData newval, int
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullIData(uint32_t* oldp, IData newval, int bits) {
     const uint32_t code = oldp - m_sigs_oldvalp;
+    #ifdef VM_TRACE_SIDE
+    emitIDataSide(code, newval, bits, *oldp);
+    #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
     emitIData(code, newval, bits);
@@ -872,6 +895,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullIData(uint32_t* oldp, IData newval, int
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullQData(uint32_t* oldp, QData newval, int bits) {
     const uint32_t code = oldp - m_sigs_oldvalp;
+    #ifdef VM_TRACE_SIDE
+    emitQDataSide(code, newval, bits, *reinterpret_cast<QData*>(oldp));
+    #endif
     *reinterpret_cast<QData*>(oldp) = newval;
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
     emitQData(code, newval, bits);
@@ -880,6 +906,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullQData(uint32_t* oldp, QData newval, int
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullWData(uint32_t* oldp, const WData* newvalp, int bits) {
     const uint32_t code = oldp - m_sigs_oldvalp;
+    #ifdef VM_TRACE_SIDE
+    emitWDataSide(code, newvalp, bits, *oldp);
+    #endif
     for (int i = 0; i < VL_WORDS_I(bits); ++i) oldp[i] = newvalp[i];
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
     emitWData(code, newvalp, bits);

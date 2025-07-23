@@ -838,6 +838,7 @@ svdpi
 swrite
 sys
 systemc
+side
 testbench
 threadsafe
 threashold

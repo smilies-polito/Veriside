@@ -125,6 +125,12 @@ define_property(TARGET
 )
 
 define_property(TARGET
+  PROPERTY VERILATOR_TRACE_SIDE
+  BRIEF_DOCS "Verilator SIDE trace enabled"
+  FULL_DOCS "Verilator SIDE trace enabled"
+)
+
+define_property(TARGET
   PROPERTY VERILATOR_SYSTEMC
   BRIEF_DOCS "Verilator SystemC enabled"
   FULL_DOCS "Verilator SystemC enabled"
@@ -288,6 +294,12 @@ function(verilate TARGET)
     set_property(TARGET ${TARGET} PROPERTY VERILATOR_TRACE_FST ON)
   endif()
 
+  if (${VERILATE_PREFIX}_TRACE_SIDE)
+    # If any verilate() call specifies TRACE_SIDE, define VM_TRACE_SIDE in the final build
+    set_property(TARGET ${TARGET} PROPERTY VERILATOR_TRACE ON)
+    set_property(TARGET ${TARGET} PROPERTY VERILATOR_TRACE_SIDE ON)
+  endif()
+
   if (${VERILATE_PREFIX}_SC)
     # If any verilate() call specifies SYSTEMC, define VM_SC in the final build
     set_property(TARGET ${TARGET} PROPERTY VERILATOR_SYSTEMC ON)
@@ -333,6 +345,7 @@ function(verilate TARGET)
     VM_TRACE=$<BOOL:$<TARGET_PROPERTY:VERILATOR_TRACE>>
     VM_TRACE_VCD=$<BOOL:$<TARGET_PROPERTY:VERILATOR_TRACE_VCD>>
     VM_TRACE_FST=$<BOOL:$<TARGET_PROPERTY:VERILATOR_TRACE_FST>>
+    VM_TRACE_SIDE=$<BOOL:$<TARGET_PROPERTY:VERILATOR_TRACE_SIDE>>
   )
 
   target_link_libraries(${TARGET} PUBLIC

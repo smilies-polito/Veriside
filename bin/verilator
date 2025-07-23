@@ -430,6 +430,7 @@ detailed descriptions of these arguments.
     --top <topname>             Alias of --top-module
     --top-module <topname>      Name of top-level input module
     --trace                     Enable waveform creation
+    --trace-side                Enable SIDE waveform creation
     --trace-coverage            Enable tracing of coverage
     --trace-depth <levels>      Depth of tracing
     --trace-fst                 Enable FST waveform creation
