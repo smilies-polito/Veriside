@@ -588,18 +588,10 @@ void VerilatedTrace<VL_SUB_T, VL_BUF_T>::dump(uint64_t timeui) VL_MT_SAFE_EXCLUD
             // Update time point
             flushBase();
             emitTimeChange(timeui);
-
-            #ifdef VM_TRACE_SIDE
-            emitTimeChangeSide(timeui);
-            #endif
         }
     } else {
         // Update time point
         emitTimeChange(timeui);
-
-        #ifdef VM_TRACE_SIDE
-        emitTimeChangeSide(timeui);
-        #endif
     }
 
     // Run the callbacks
