@@ -536,7 +536,7 @@ void VerilatedSide::declare(uint32_t code, const char* name, const char* wirep, 
         }
     }
 
-    if (nameasstr.find("trigger_data_q") != std::string::npos) {
+    if (!SideTrace::trigger_signal_name.empty() && nameasstr.find(SideTrace::trigger_signal_name) != std::string::npos) {
         SideTrace::trigger_data_code = code;
     }
 
