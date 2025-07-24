@@ -1,13 +1,15 @@
 // -*- mode: C++; c-file-style: "cc-mode" -*-
 //=============================================================================
 //
-// Code available from: https://verilator.org
+// VeriSide: RTL-Level Side-Channel Leakage Tracing Extensions
 //
-// Copyright 2001-2023 by Wilson Snyder. This program is free software; you
-// can redistribute it and/or modify it under the terms of either the GNU
-// Lesser General Public License Version 3 or the Perl Artistic License
-// Version 2.0.
-// SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
+// Author: Behnam Farnaghinejad <behnam.farnaghinejad@polito.it>
+// Code available from: https://gitlab.com/smilies-polito/VeriSide
+//
+// This file is part of VeriSide, a modified version of Verilator for
+// power side-channel analysis.
+// 
+// Copyright 2025 by Behnam Farnaghinejad. 
 //
 //=============================================================================
 ///
@@ -15,9 +17,9 @@
 /// \brief Verilated C++ tracing in Side format implementation code
 ///
 /// This file must be compiled and linked against all Verilated objects
-/// that use --trace.
+/// that use --trace-side.
 ///
-/// Use "verilator --trace" to add this to the Makefile for the linker.
+/// Use "verilator --trace-side" to add this to the Makefile for the linker.
 ///
 //=============================================================================
 

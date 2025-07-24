@@ -19,6 +19,16 @@
 //          If appropriate type of signal, create a TraceDecl
 //
 //*************************************************************************
+//
+// VeriSide: RTL-Level Side-Channel Leakage Tracing Extensions
+//
+// Modifications for --trace-side support by Behnam Farnaghinejad <behnam.farnaghinejad@polito.it>
+// Code available from: https://gitlab.com/smilies-polito/VeriSide
+//
+// This file is part of VeriSide, a modified version of Verilator for
+// power side-channel analysis.
+// 
+//*************************************************************************
 
 #include "config_build.h"
 #include "verilatedos.h"

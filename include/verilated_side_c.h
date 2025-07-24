@@ -1,6 +1,16 @@
 // -*- mode: C++; c-file-style: "cc-mode" -*-
 //=============================================================================
-// VerilatedSideC - Tracing in SIDE format
+//
+// VeriSide: RTL-Level Side-Channel Leakage Tracing Extensions
+//
+// Author: Behnam Farnaghinejad <behnam.farnaghinejad@polito.it>
+// Code available from: https://gitlab.com/smilies-polito/VeriSide
+//
+// This file is part of VeriSide, a modified version of Verilator for
+// power side-channel analysis.
+// 
+// Copyright 2025 by Behnam Farnaghinejad. 
+//
 //=============================================================================
 ///
 /// \file
