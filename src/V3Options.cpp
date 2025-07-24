@@ -1503,7 +1503,7 @@ void V3Options::parseOptsList(FileLine* fl, const string& optdir, int argc, char
         if (!modules.empty()) m_sideModules.push_back(modules);
     });
 
-    DECL_OPTION("-hw", OnOff, &m_sideHw);
+    DECL_OPTION("-side-hw", OnOff, &m_sideHw);
 
     DECL_OPTION("-trace-coverage", OnOff, &m_traceCoverage);
     DECL_OPTION("-trace-depth", Set, &m_traceDepth);

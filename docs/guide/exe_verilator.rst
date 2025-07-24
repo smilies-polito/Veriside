@@ -1320,11 +1320,14 @@ Summary:
    to VCD format usage, but the output is switching activity rather than
    signal values. This is useful for power analysis.
 
-   The re are two input arquments to this option, which are
+   There are two input arguments to this option, which are
    :code:`--side trigger <trigger>` and :code:`--side-module <module>`.
    The first argument specifies the trigger for the SIDE tracing, which
-   can be a signal name. The second argument
-   specifies the module name for which the SIDE tracing is enabled.
+   can be a signal name. The second argument specifies the module name 
+   for which the SIDE tracing is enabled.
+
+   :code:`--side-hw` is also available to enable calculation of hamming
+   weights for the SIDE tracing instead of hamming distances.
 
 .. option:: --trace-coverage
 

@@ -475,6 +475,7 @@ detailed descriptions of these arguments.
     --trace-side                Enable SIDE waveform creation
     --side-trigger <signal>     Define SIDE trigger on signal
     --side-modules <modules>    Define SIDE modules, comma-separated
+    --side-hw                   Enable Hamming Weight in SIDE (Otherwise, Hamming Distance will be used)
 
 This is a short summary of the simulation runtime arguments, i.e. for the
 final Verilated simulation runtime models.  See

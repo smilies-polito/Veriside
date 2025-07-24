@@ -344,7 +344,7 @@ private:
     // Side channel analysis options
     string      m_sideTrigger;  // main switch: --side-trigger
     V3StringList m_sideModules; // main switch: --side-modules
-    bool        m_sideHw;       // main switch: -hd (hamming distance vs hamming weight)
+    bool        m_sideHw;       // main switch: --side-hw (hamming weight vs hamming distance)
 
     // Language is now held in FileLine, on a per-node basis. However we still
     // have a concept of the default language at a global level.
