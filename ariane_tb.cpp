@@ -299,6 +299,19 @@ done_processing:
   }
   else
     std::cerr << "No explicit FST file name supplied, using RTL defaults.\n";
+#elif VM_TRACE_SIDE
+  // define a side channel file name to test
+  const char *sidefile = "ariane_side_channel_header.side";
+  std::unique_ptr<VerilatedSideFile> sidefd(new VerilatedSideFile());
+  std::unique_ptr<VerilatedSideC> tfp(new VerilatedSideC(sidefd.get()));
+  if (sidefile) {
+    std::cerr << "The sidefile (" << sidefile << ") consists of module/signal definitions (like a VCD header) and filtered signals.\n";
+    std::cerr << "Traces are written to different files for each defined module separately.\n";
+    top->trace(tfp.get(), 99);  // Trace 99 levels of hierarchy
+    tfp->open(sidefile);
+  }
+  else
+    std::cerr << "No explicit side channel file name supplied, using RTL defaults.\n";
 #else
   std::unique_ptr<VerilatedVcdFILE> vcdfd(new VerilatedVcdFILE(vcdfile));
   std::unique_ptr<VerilatedVcdC> tfp(new VerilatedVcdC(vcdfd.get()));
@@ -318,14 +331,30 @@ done_processing:
     top->rtc_i = 0;
     top->eval();
 #if VM_TRACE
-    if (vcdfile || fst_fname)
+#if VM_TRACE_FST
+    if (fst_fname)
       tfp->dump(static_cast<vluint64_t>(main_time * 2));
+#elif VM_TRACE_SIDE
+    if(sidefile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2));
+#else
+    if (vcdfile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2));
+#endif
 #endif
     top->clk_i = 1;
     top->eval();
 #if VM_TRACE
-    if (vcdfile || fst_fname)
+#if VM_TRACE_FST
+    if (fst_fname)
       tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
+#elif VM_TRACE_SIDE
+    if(sidefile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
+#else
+    if (vcdfile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
+#endif
 #endif
     main_time++;
   }
@@ -361,15 +390,31 @@ done_processing:
     top->clk_i = 0;
     top->eval();
 #if VM_TRACE
-    if (vcdfile || fst_fname)
+#if VM_TRACE_FST
+    if (fst_fname)
       tfp->dump(static_cast<vluint64_t>(main_time * 2));
+#elif VM_TRACE_SIDE
+    if(sidefile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2));
+#else
+    if (vcdfile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2));
+#endif
 #endif
 
     top->clk_i = 1;
     top->eval();
 #if VM_TRACE
-    if (vcdfile || fst_fname)
+#if VM_TRACE_FST
+    if (fst_fname)
       tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
+#elif VM_TRACE_SIDE
+    if(sidefile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
+#else
+    if (vcdfile)
+      tfp->dump(static_cast<vluint64_t>(main_time * 2 + 1));
+#endif
 #endif
     // toggle RTC
     if (main_time % 2 == 0) {
@@ -381,8 +426,10 @@ done_processing:
 #if VM_TRACE
   if (tfp)
     tfp->close();
+#if !defined(VM_TRACE_FST) && !defined(VM_TRACE_SIDE)
   if (vcdfile)
     fclose(vcdfile);
+#endif
 #endif
 
   if (dtm->exit_code()) {
