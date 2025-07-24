@@ -82,6 +82,32 @@ static size_t roundUpToMultipleOf(size_t value) {
 #undef VL_SUB_T
 #undef VL_BUF_T
 
+// SideTrace namespace implementation
+
+namespace SideTrace {
+    // Dynamic configuration variables
+    int kNumInstances = 0;
+    std::vector<std::ofstream> output_files;
+    std::vector<std::string> instance_names;
+    std::vector<std::unordered_map<uint32_t, std::string>> filtered_signals;
+    std::vector<std::uint32_t> switching_activity;
+    std::string trigger_signal_name;
+    
+    void configure(const std::vector<std::string>& modules, const std::string& trigger) {
+        kNumInstances = modules.size();
+        instance_names = modules;
+        trigger_signal_name = trigger;
+        
+        // Resize all vectors
+        output_files.resize(kNumInstances);
+        filtered_signals.resize(kNumInstances);
+        switching_activity.resize(kNumInstances);
+        
+        // Initialize switching activity to 0
+        std::fill(switching_activity.begin(), switching_activity.end(), 0);
+    }
+}
+
 //=============================================================================
 // VerilatedSideFile
 

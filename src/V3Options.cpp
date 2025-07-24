@@ -800,6 +800,16 @@ void V3Options::notify() {
         cmdfl->v3error("--hierarchical-block must be set when --hierarchical-child is set");
     }
 
+    // Validate side channel analysis options
+    if (traceFormat().side()) {
+        if (m_sideTrigger.empty()) {
+            cmdfl->v3error("--trace-side requires --side-trigger to be specified");
+        }
+        if (m_sideModules.empty()) {
+            cmdfl->v3error("--trace-side requires --side-modules to be specified");
+        }
+    }
+
     if (protectIds()) {
         if (allPublic()) {
             // We always call protect() on names, we don't check if public or not
@@ -1475,6 +1485,22 @@ void V3Options::parseOptsList(FileLine* fl, const string& optdir, int argc, char
         m_trace = true;
         m_traceFormat = TraceFormat::SIDE;
         addLdLibs("-lz");
+    });
+
+    DECL_OPTION("-side-trigger", CbVal, [this](const char* valp) {
+        m_sideTrigger = valp;
+    });
+
+    DECL_OPTION("-side-modules", CbVal, [this](const char* valp) {
+        // Split comma-separated module names
+        string modules = valp;
+        string::size_type pos = 0;
+        while ((pos = modules.find(',')) != string::npos) {
+            string module = modules.substr(0, pos);
+            if (!module.empty()) m_sideModules.push_back(module);
+            modules = modules.substr(pos + 1);
+        }
+        if (!modules.empty()) m_sideModules.push_back(modules);
     });
     
     DECL_OPTION("-trace-coverage", OnOff, &m_traceCoverage);

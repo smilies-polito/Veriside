@@ -28,11 +28,15 @@ class VerilatedSideFile;
 namespace SideTrace {
     static constexpr bool kVerboseTrace = false;
     constexpr std::streamoff kTrimTrailingComma = -2;
-    constexpr int kNumInstances = 5;
-    std::ofstream output_files[kNumInstances];
-    std::string instance_names[kNumInstances] = {"i_ariane", "i_crypto_coprocessor", "co_crypto_aes64", "i_fwd_sbox0", "i_mix_e0"};
-    std::unordered_map<uint32_t, std::string> filtered_signals[kNumInstances];
-    std::uint32_t switching_activity[kNumInstances] = {0, 0, 0, 0, 0};
+    
+    // Dynamic configuration from command line options
+    extern int kNumInstances;
+    extern std::vector<std::ofstream> output_files;
+    extern std::vector<std::string> instance_names;
+    extern std::vector<std::unordered_map<uint32_t, std::string>> filtered_signals;
+    extern std::vector<std::uint32_t> switching_activity;
+    extern std::string trigger_signal_name;
+    
     /// Updated atomically in trace callback thread
     std::atomic<bool> trigger_data_flag{false};
     /// Updated atomically in trace callback thread
@@ -42,6 +46,9 @@ namespace SideTrace {
     std::uint32_t trigger_data_code = 0;
     std::uint32_t time_window = 0;
 
+    // Configuration functions
+    void configure(const std::vector<std::string>& modules, const std::string& trigger);
+    
     inline void WriteActivity(uint64_t timeui) VL_MT_SAFE {
         if (!trigger_data_flag.load()) {
             if (kVerboseTrace) {

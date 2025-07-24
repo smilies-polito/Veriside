@@ -430,7 +430,6 @@ detailed descriptions of these arguments.
     --top <topname>             Alias of --top-module
     --top-module <topname>      Name of top-level input module
     --trace                     Enable waveform creation
-    --trace-side                Enable SIDE waveform creation
     --trace-coverage            Enable tracing of coverage
     --trace-depth <levels>      Depth of tracing
     --trace-fst                 Enable FST waveform creation
@@ -472,6 +471,10 @@ detailed descriptions of these arguments.
     --xml-only                  Create XML parser output
     --xml-output                XML output filename
      -y <dir>                   Directory to search for modules
+
+    --trace-side                Enable SIDE waveform creation
+    --side-trigger <signal>     Define SIDE trigger on signal
+    --side-modules <modules>    Define SIDE modules, comma-separated
 
 This is a short summary of the simulation runtime arguments, i.e. for the
 final Verilated simulation runtime models.  See

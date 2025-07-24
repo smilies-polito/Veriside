@@ -1320,6 +1320,12 @@ Summary:
    to VCD format usage, but the output is switching activity rather than
    signal values. This is useful for power analysis.
 
+   The re are two input arquments to this option, which are
+   :code:`--side trigger <trigger>` and :code:`--side-module <module>`.
+   The first argument specifies the trigger for the SIDE tracing, which
+   can be a signal name. The second argument
+   specifies the module name for which the SIDE tracing is enabled.
+
 .. option:: --trace-coverage
 
    With :vlopt:`--trace` and ``--coverage-*``, enable tracing to include a
