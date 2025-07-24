@@ -1,5 +1,5 @@
-<p align="left">
-  <img src="docs/_static/veriside_logo.png" alt="VeriSide Logo" width="70"/>
+<p align="center">
+  <img src="docs/_static/veriside_logo.png" alt="VeriSide Logo" width="100"/>
 </p>
 
 ## 🛠️ Installation
@@ -223,8 +223,6 @@ Individual JSON files for each module specified in `--side-modules`, containing 
 ```
 
 The JSON file contains time-windowed switching activity data. Each top-level key (e.g., `"TW_0"`, `"TW_1"`) represents a time window. Inside each window, the keys are simulation time points, and the values are the measured switching activity (e.g., Hamming Distance or Hamming Weight) at that time. This structure allows you to analyze detailed switching activity per time window and per simulation cycle.
-
-```
 
 The JSON format makes it easy to parse and analyze the data using Python, MATLAB, or any other tool that supports JSON:
 
