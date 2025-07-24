@@ -146,8 +146,11 @@ namespace SideTrace {
             }
         }
         
-        // Write validation info to side file
-        std::string validation_output = "Side channel configuration validated successfully:\n";
+        // Validation passed - no file writing here anymore
+    }
+    
+    std::string generateValidationOutput() {
+        std::string validation_output = "\n\nSide channel configuration validated successfully:\n";
         validation_output += "  - Trigger signal: " + trigger_signal_name + " ✓\n";
         
         // Print all filtered signals for each module
@@ -159,10 +162,7 @@ namespace SideTrace {
             }
         }
         
-        // Write to side file
-        if (filep) {
-            filep->write(validation_output.c_str(), validation_output.length());
-        }
+        return validation_output;
     }
 }
 
@@ -197,6 +197,7 @@ VerilatedSide::VerilatedSide(VerilatedSideFile* filep) {
 }
 
 void VerilatedSide::open(const char* filename) VL_MT_SAFE_EXCLUDES(m_mutex) {
+
     const VerilatedLockGuard lock{m_mutex};
     if (isOpen()) return;
 
@@ -314,6 +315,18 @@ void VerilatedSide::deleteNameMap() {
 
 VerilatedSide::~VerilatedSide() {
     close();
+    // Write validation output before closing
+    if (SideTrace::kNumInstances > 0) {
+        std::string validation_output = SideTrace::generateValidationOutput();
+        if (!validation_output.empty()) {
+            // Open the file in append mode, write, then close
+            std::ofstream ofs(m_filename, std::ios::app);
+            if (ofs.is_open()) {
+                ofs << validation_output;
+                ofs.close();
+            }
+        }
+    }
     if (m_wrBufp) VL_DO_CLEAR(delete[] m_wrBufp, m_wrBufp = nullptr);
     deleteNameMap();
     if (m_filep && m_fileNewed) VL_DO_CLEAR(delete m_filep, m_filep = nullptr);
@@ -348,6 +361,7 @@ void VerilatedSide::close() VL_MT_SAFE_EXCLUDES(m_mutex) {
     // This function is on the flush() call path
     const VerilatedLockGuard lock{m_mutex};
     if (!isOpen()) return;
+    
     closePrev();
     // closePrev() called Super::flush(), so we just
     // need to shut down the tracing thread here.
@@ -559,7 +573,7 @@ void VerilatedSide::dumpHeader() {
     printStr("$enddefinitions $end\n\n\n");
     assert(m_modDepth == 0);
 
-    // Validate side channel configuration
+    // Validate configuration after all signals have been processed
     SideTrace::validateConfiguration(m_filep);
 
     // Reclaim storage
@@ -596,10 +610,24 @@ void VerilatedSide::declare(uint32_t code, const char* name, const char* wirep, 
     std::string basename;
 
     for (const auto& name : SideTrace::instance_names) {
-        if (nameasstr.find(name) != std::string::npos) {
-            size_t module_index = &name - &SideTrace::instance_names[0];
-            SideTrace::filtered_signals[module_index][code] = nameasstr;
-            SideTrace::modules_found[module_index] = true;  // Mark module as found
+        // Match only if 'nameasstr' contains 'name' as a whole word (not as a substring of another word)
+        // We check that the match is either at the start or preceded by a space,
+        // and is either at the end or followed by a space/tab/NULL.
+        size_t pos = nameasstr.find(name);
+        while (pos != std::string::npos) {
+            bool at_start = (pos == 0) || (nameasstr[pos - 1] == ' ');
+            size_t after = pos + name.length();
+            bool at_end = (after == nameasstr.length()) ||
+                          (nameasstr[after] == ' ') ||
+                          (nameasstr[after] == '\t') ||
+                          (nameasstr[after] == '\0');
+            if (at_start && at_end) {
+                size_t module_index = &name - &SideTrace::instance_names[0];
+                SideTrace::filtered_signals[module_index][code] = nameasstr;
+                SideTrace::modules_found[module_index] = true;  // Mark module as found
+                break;
+            }
+            pos = nameasstr.find(name, pos + 1);
         }
     }
 
