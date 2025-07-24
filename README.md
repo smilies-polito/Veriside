@@ -37,8 +37,6 @@ make test
 # Install VeriSide
 make install
 
-# Add to PATH (add this to your ~/.bashrc or ~/.zshrc)
-export PATH=$VERILATOR_INSTALL_DIR/bin:$PATH
 ```
 
 ---
@@ -204,7 +202,8 @@ VeriSide generates two types of files during simulation:
 Contains a VCD-like header with module hierarchy and signal definitions, followed by validation information showing which signals were filtered for each specified module.
 
 #### 2. **Module-Specific JSON Files** (e.g., `module_name.side`)
-Individual JSON files for each module specified in `--side-modules`, containing time-windowed switching activity data.
+Individual JSON files for each module specified in `--side-modules`, containing switching activity data segmented into time windows.  
+Each time window is defined by the trigger signal: a new window starts when the trigger becomes non-zero, and the window ends when the trigger returns
 
 **JSON Format Example:**
 ```json
