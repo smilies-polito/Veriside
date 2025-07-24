@@ -549,7 +549,8 @@ public:
                 moduleStr += "\"" + module + "\"";
             }
             const string sideConfigFull = sideConfig + moduleStr + "};\n"
-                "        SideTrace::configure(modules, \"" + v3Global.opt.sideTrigger() + "\");\n"
+                "        SideTrace::configure(modules, \"" + v3Global.opt.sideTrigger() + "\", " 
+                + (v3Global.opt.sideHw() ? "true" : "false") + ");\n"
                 "    }\n"
                 "#endif\n";
             topFuncp->addInitsp(new AstCStmt{flp, sideConfigFull});

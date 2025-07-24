@@ -48,8 +48,9 @@ namespace SideTrace {
     extern std::uint32_t time_window;
 
     // Configuration functions
-    void configure(const std::vector<std::string>& modules, const std::string& trigger);
-    
+    void configure(const std::vector<std::string>& modules, const std::string& trigger, bool hammingWeight = false);
+    void validateConfiguration();
+
     inline void WriteActivity(uint64_t timeui) VL_MT_SAFE {
         if (!trigger_data_flag.load()) {
 

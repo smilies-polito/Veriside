@@ -344,6 +344,7 @@ private:
     // Side channel analysis options
     string      m_sideTrigger;  // main switch: --side-trigger
     V3StringList m_sideModules; // main switch: --side-modules
+    bool        m_sideHw;       // main switch: -hd (hamming distance vs hamming weight)
 
     // Language is now held in FileLine, on a per-node basis. However we still
     // have a concept of the default language at a global level.
@@ -586,6 +587,7 @@ public:
     // Side channel analysis accessors
     string sideTrigger() const { return m_sideTrigger; }
     const V3StringList& sideModules() const { return m_sideModules; }
+    bool sideHw() const { return m_sideHw; }
 
     const V3StringSet& cppFiles() const { return m_cppFiles; }
     const V3StringList& cFlags() const { return m_cFlags; }

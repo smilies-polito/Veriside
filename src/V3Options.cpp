@@ -1502,7 +1502,9 @@ void V3Options::parseOptsList(FileLine* fl, const string& optdir, int argc, char
         }
         if (!modules.empty()) m_sideModules.push_back(modules);
     });
-    
+
+    DECL_OPTION("-hw", OnOff, &m_sideHw);
+
     DECL_OPTION("-trace-coverage", OnOff, &m_traceCoverage);
     DECL_OPTION("-trace-depth", Set, &m_traceDepth);
     DECL_OPTION("-trace-fst", CbCall, [this]() {
@@ -1929,6 +1931,9 @@ V3Options::V3Options() {
     m_makeDir = "obj_dir";
     m_unusedRegexp = "*unused*";
     m_xAssign = "fast";
+
+    // Side channel analysis defaults
+    m_sideHw = false;  // Default to hamming weight (not hamming distance)
 
     m_defaultLanguage = V3LangCode::mostRecent();
 

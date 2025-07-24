@@ -100,21 +100,62 @@ namespace SideTrace {
     std::uint32_t trigger_data_code = 0;
     std::uint32_t time_window = 0;
     
-    void configure(const std::vector<std::string>& modules, const std::string& trigger) {
+    // Hamming distance vs hamming weight flag
+    bool use_hamming_weight = false;
+    
+    // Validation tracking
+    bool trigger_signal_found = false;
+    std::vector<bool> modules_found;
+
+    void configure(const std::vector<std::string>& modules, const std::string& trigger, bool hammingWeight) {
         kNumInstances = modules.size();
         instance_names = modules;
         trigger_signal_name = trigger;
-        
+        use_hamming_weight = hammingWeight;
+
         // Resize all vectors
         output_files.resize(kNumInstances);
         filtered_signals.resize(kNumInstances);
         switching_activity.resize(kNumInstances);
+        
+        // Initialize tracking vectors
+        modules_found.resize(kNumInstances, false);
+        trigger_signal_found = false;
         
         // Initialize switching activity to 0
         std::fill(switching_activity.begin(), switching_activity.end(), 0);
         
         // Enable monitoring when configuration is set
         monitor_enabled.store(true);
+    }
+    
+    void validateConfiguration() {
+        // Check if trigger signal was found
+        if (!trigger_signal_name.empty() && !trigger_signal_found) {
+            std::cerr << "ERROR: Trigger signal '" << trigger_signal_name << "' not found in any traced signals!" << std::endl;
+            std::cerr << "Make sure the trigger signal name matches exactly with a signal in your design." << std::endl;
+            exit(1);
+        }
+        
+        // Check if all required modules were found
+        for (size_t i = 0; i < instance_names.size(); ++i) {
+            if (!modules_found[i]) {
+                std::cerr << "ERROR: Module '" << instance_names[i] << "' not found in any traced signals!" << std::endl;
+                std::cerr << "Make sure the module name matches exactly with a module in your design." << std::endl;
+                exit(1);
+            }
+        }
+        
+        std::cout << "Side channel configuration validated successfully:" << std::endl;
+        std::cout << "  - Trigger signal: " << trigger_signal_name << " ✓" << std::endl;
+        
+        // Print all filtered signals for each module
+        for (size_t i = 0; i < instance_names.size(); ++i) {
+            std::cout << "  - Module: " << instance_names[i] << " ✓ (" << filtered_signals[i].size() << " signals)" << std::endl;
+            for (const auto& signal_pair : filtered_signals[i]) {
+                std::cout << "    * " << signal_pair.second << std::endl;
+            }
+        }
     }
 }
 
@@ -511,6 +552,9 @@ void VerilatedSide::dumpHeader() {
     printStr("$enddefinitions $end\n\n\n");
     assert(m_modDepth == 0);
 
+    // Validate side channel configuration
+    SideTrace::validateConfiguration();
+
     // Reclaim storage
     deleteNameMap();
 }
@@ -546,12 +590,15 @@ void VerilatedSide::declare(uint32_t code, const char* name, const char* wirep, 
 
     for (const auto& name : SideTrace::instance_names) {
         if (nameasstr.find(name) != std::string::npos) {
-            SideTrace::filtered_signals[&name - &SideTrace::instance_names[0]][code] = nameasstr;
+            size_t module_index = &name - &SideTrace::instance_names[0];
+            SideTrace::filtered_signals[module_index][code] = nameasstr;
+            SideTrace::modules_found[module_index] = true;  // Mark module as found
         }
     }
 
     if (!SideTrace::trigger_signal_name.empty() && nameasstr.find(SideTrace::trigger_signal_name) != std::string::npos) {
         SideTrace::trigger_data_code = code;
+        SideTrace::trigger_signal_found = true;  // Mark trigger as found
     }
 
     for (const char* cp = nameasstr.c_str(); *cp; cp++) {
@@ -756,17 +803,17 @@ void VerilatedSideBuffer::finishLine(uint32_t code, char* writep) {
 // so always inline them.
 
 /// Filters signals and accumulates switching activity
-void VerilatedSideBuffer::handleSwActivity(uint32_t code, uint32_t newval) {
+void VerilatedSideBuffer::handleSwActivity(uint32_t code, uint32_t hd_hw) {
     // Check if this is the trigger signal
     if(code == SideTrace::trigger_data_code) {
-        if(newval > 0 && !SideTrace::trigger_data_flag.load()){
+        if(hd_hw > 0 && !SideTrace::trigger_data_flag.load()){
             SideTrace::trigger_data_flag.store(true);
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
                 SideTrace::output_files[i] << "\t\"TW_" << SideTrace::time_window << "\": {\n";
             }
             SideTrace::time_window++;
         }
-        else if(newval == 0 && SideTrace::trigger_data_flag.load()){
+        else if(hd_hw == 0 && SideTrace::trigger_data_flag.load()){
             // Write accumulated switching activity and close time window
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
                 SideTrace::output_files[i] << "\t\t\"switching_activity\": " << SideTrace::switching_activity[i] << "\n\t},\n";
@@ -781,11 +828,11 @@ void VerilatedSideBuffer::handleSwActivity(uint32_t code, uint32_t newval) {
     if (!SideTrace::monitor_enabled.load()) {
         return; // Skip if not configured
     }
-    
+
     // Accumulate switching activity for signals in monitored modules
     for (int i = 0; i < SideTrace::kNumInstances; ++i) {
         if (SideTrace::filtered_signals[i].find(code) != SideTrace::filtered_signals[i].end()) {
-            SideTrace::switching_activity[i] += newval;
+            SideTrace::switching_activity[i] += hd_hw;
         }
     }
 }
@@ -805,77 +852,84 @@ void VerilatedSideBuffer::emitEventSide(uint32_t code, VlEvent newval, VlEvent o
 
 VL_ATTR_ALWINLINE
 void VerilatedSideBuffer::emitBitSide(uint32_t code, CData newval, CData oldval) {
-    // Calculate switching activity as XOR between newval and oldval
-    CData sw_activity = newval ^ oldval;
+    // Calculate switching activity based on configuration
+    CData sw_activity;
+    if (SideTrace::use_hamming_weight) {
+        sw_activity = newval;  // Use newval directly for hamming weight
+    } else {
+        sw_activity = newval ^ oldval;  // XOR for hamming distance
+    }
+    sw_activity = __builtin_popcount(sw_activity); // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
 VL_ATTR_ALWINLINE
 void VerilatedSideBuffer::emitCDataSide(uint32_t code, CData newval, int bits, CData oldval) {
-    // char* wp = m_writep;
-    // *wp++ = 'b';
-    // cvtCDataToStr(wp, newval << (VL_BYTESIZE - bits));
-    // finishLine(code, wp + bits);
-    // Calculate switching activity as XOR between newval and oldval
-    CData sw_activity = newval ^ oldval;
+    // Calculate switching activity based on configuration
+    CData sw_activity;
+    if (SideTrace::use_hamming_weight) {
+        sw_activity = newval;  // Use newval directly for hamming weight
+    } else {
+        sw_activity = newval ^ oldval;  // XOR for hamming distance
+    }
+    sw_activity = __builtin_popcount(sw_activity); // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
 VL_ATTR_ALWINLINE
 void VerilatedSideBuffer::emitSDataSide(uint32_t code, SData newval, int bits, SData oldval) {
-    // char* wp = m_writep;
-    // *wp++ = 'b';
-    // cvtSDataToStr(wp, newval << (VL_SHORTSIZE - bits));
-    // finishLine(code, wp + bits);
-    // Calculate switching activity as XOR between newval and oldval
-    SData sw_activity = newval ^ oldval;
+    // Calculate switching activity based on configuration
+    SData sw_activity;
+    if (SideTrace::use_hamming_weight) {
+        sw_activity = newval;  // Use newval directly for hamming weight
+    } else {
+        sw_activity = newval ^ oldval;  // XOR for hamming distance
+    }
+    sw_activity = __builtin_popcount(sw_activity); // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
 VL_ATTR_ALWINLINE
 void VerilatedSideBuffer::emitIDataSide(uint32_t code, IData newval, int bits, IData oldval) {
-    // char* wp = m_writep;
-    // *wp++ = 'b';
-    // cvtIDataToStr(wp, newval << (VL_IDATASIZE - bits));
-    // finishLine(code, wp + bits);
-    // Calculate switching activity as XOR between newval and oldval
-    IData sw_activity = newval ^ oldval;
+    // Calculate switching activity based on configuration
+    IData sw_activity;
+    if (SideTrace::use_hamming_weight) {
+        sw_activity = newval;  // Use newval directly for hamming weight
+    } else {
+        sw_activity = newval ^ oldval;  // XOR for hamming distance
+    }
+    sw_activity = __builtin_popcount(sw_activity); // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
 VL_ATTR_ALWINLINE
 void VerilatedSideBuffer::emitQDataSide(uint32_t code, QData newval, int bits, QData oldval) {
-    // char* wp = m_writep;
-    // *wp++ = 'b';
-    // cvtQDataToStr(wp, newval << (VL_QUADSIZE - bits));
-    // finishLine(code, wp + bits);
-    // Calculate switching activity as XOR between newval and oldval
-    QData sw_activity = newval ^ oldval;
+    // Calculate switching activity based on configuration
+    QData sw_activity;
+    if (SideTrace::use_hamming_weight) {
+        sw_activity = newval;  // Use newval directly for hamming weight
+    } else {
+        sw_activity = newval ^ oldval;  // XOR for hamming distance
+    }
+    sw_activity = __builtin_popcountll(sw_activity); // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
 VL_ATTR_ALWINLINE
 void VerilatedSideBuffer::emitWDataSide(uint32_t code, const WData* newvalp, int bits, const WData* oldvalp) {
-    // int words = VL_WORDS_I(bits);
-    // char* wp = m_writep;
-    // *wp++ = 'b';
-    // // Handle the most significant word
-    // const int bitsInMSW = VL_BITBIT_E(bits) ? VL_BITBIT_E(bits) : VL_EDATASIZE;
-    // cvtEDataToStr(wp, newvalp[--words] << (VL_EDATASIZE - bitsInMSW));
-    // wp += bitsInMSW;
-    // // Handle the remaining words
-    // while (words > 0) {
-    //     cvtEDataToStr(wp, newvalp[--words]);
-    //     wp += VL_EDATASIZE;
-    // }
-    // finishLine(code, wp);
-    // Calculate switching activity as XOR between newval and oldval
-    WData sw_activity = 0;
+    // Calculate switching activity based on configuration
+    uint32_t total_activity = 0;
     int words = VL_WORDS_I(bits);
     for (int i = 0; i < words; ++i) {
-        sw_activity |= (newvalp[i] ^ oldvalp[i]);
+        WData sw_activity;
+        if (SideTrace::use_hamming_weight) {
+            sw_activity = newvalp[i];  // Use newval directly for hamming weight
+        } else {
+            sw_activity = newvalp[i] ^ oldvalp[i];  // XOR for hamming distance
+        }
+        total_activity += __builtin_popcount(sw_activity);
     }
-    handleSwActivity(code, sw_activity);
+    handleSwActivity(code, total_activity);
 }
 
 VL_ATTR_ALWINLINE
