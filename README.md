@@ -36,7 +36,64 @@ VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming We
 
 ---
 
-## 📈 Performance Comparison 
+## �️ Usage
+
+VeriSide extends Verilator with additional command line options specifically designed for side-channel analysis. To enable side-channel tracing in your RTL simulation, use the following options:
+
+### Side-Channel Analysis Options
+
+#### `--trace-side`
+Enables side-channel analysis and generation of `.side` files containing Hamming Distance (HD) and Hamming Weight (HW) data.
+
+**Usage:**
+```bash
+verilator --trace-side [other options] design.sv
+```
+
+#### `--side-trigger <signal_name>`
+Specifies the trigger signal name that controls when side-channel data collection begins. The analysis will start capturing data when this signal transitions.
+
+**Usage:**
+```bash
+verilator --trace-side --side-trigger "trigger_data_q" design.sv
+```
+
+#### `--side-modules <module1,module2,...>`
+Defines a comma-separated list of module instances to monitor for side-channel analysis. Only switching activity within these specified modules will be captured in the `.side` files.
+
+**Usage:**
+```bash
+verilator --trace-side --side-trigger "trigger_signal" --side-modules "cpu_core,crypto_unit,cache_controller" design.sv
+```
+
+### Complete Example
+
+Here's a complete example of using VeriSide for side-channel analysis:
+
+```bash
+verilator --trace-side \
+          --side-trigger "data_valid_q" \
+          --side-modules "ariane_core,aes_unit,mem_controller" \
+          -cc --exe \
+          design.sv testbench.cpp
+```
+
+This command will:
+- Enable side-channel tracing (`--trace-side`)
+- Start data collection when `data_valid_q` signal triggers (`--side-trigger`)
+- Monitor switching activity in the specified modules (`--side-modules`)
+- Generate `.side` files with HD/HW data for leakage assessment
+
+### Important Notes
+
+- **Both `--side-trigger` and `--side-modules` are required** when using `--trace-side`
+- Module names should match the instance names in your RTL hierarchy
+- The trigger signal should be a valid signal name accessible in your design
+- Generated `.side` files will be created in the same directory as your simulation executable
+
+---
+
+## �📈 Performance Comparison 
 Case studies on CVA6 RISC-V core with a cryptographic accelerator via the CV-X-IF interface demonstrate VeriSide’s efficacy.
 
 | Metric                | VeriSide | Verilator + VCD |
