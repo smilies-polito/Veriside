@@ -93,6 +93,13 @@ namespace SideTrace {
     std::vector<std::uint32_t> switching_activity;
     std::string trigger_signal_name;
     
+    // Atomic variables for trace thread synchronization
+    std::atomic<bool> trigger_data_flag{false};
+    std::atomic<bool> prev_trigger_flag{false};
+    std::atomic<bool> monitor_enabled{false};
+    std::uint32_t trigger_data_code = 0;
+    std::uint32_t time_window = 0;
+    
     void configure(const std::vector<std::string>& modules, const std::string& trigger) {
         kNumInstances = modules.size();
         instance_names = modules;
@@ -105,6 +112,9 @@ namespace SideTrace {
         
         // Initialize switching activity to 0
         std::fill(switching_activity.begin(), switching_activity.end(), 0);
+        
+        // Enable monitoring when configuration is set
+        monitor_enabled.store(true);
     }
 }
 
@@ -295,10 +305,14 @@ void VerilatedSide::close() VL_MT_SAFE_EXCLUDES(m_mutex) {
     // need to shut down the tracing thread here.
     Super::closeBase();
 
+    // Close side channel files and write final closing brace
     for (int i = 0; i < SideTrace::kNumInstances; ++i) {
-        SideTrace::output_files[i].seekp(SideTrace::kTrimTrailingComma, std::ios_base::end);
-        SideTrace::output_files[i] << "\n}\n";
-        SideTrace::output_files[i].close();
+        if (SideTrace::output_files[i].is_open()) {
+            // Remove trailing comma and newline, then close JSON
+            SideTrace::output_files[i].seekp(-2, std::ios_base::end);
+            SideTrace::output_files[i] << "\n}\n";
+            SideTrace::output_files[i].close();
+        }
     }
 }
 
@@ -743,25 +757,32 @@ void VerilatedSideBuffer::finishLine(uint32_t code, char* writep) {
 
 /// Filters signals and accumulates switching activity
 void VerilatedSideBuffer::handleSwActivity(uint32_t code, uint32_t newval) {
+    // Check if this is the trigger signal
     if(code == SideTrace::trigger_data_code) {
-        if(newval>0 && !SideTrace::trigger_data_flag.load()){
+        if(newval > 0 && !SideTrace::trigger_data_flag.load()){
             SideTrace::trigger_data_flag.store(true);
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
                 SideTrace::output_files[i] << "\t\"TW_" << SideTrace::time_window << "\": {\n";
             }
             SideTrace::time_window++;
         }
-        else if(SideTrace::trigger_data_flag.load()){
+        else if(newval == 0 && SideTrace::trigger_data_flag.load()){
+            // Write accumulated switching activity and close time window
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
-                SideTrace::output_files[i] << "0\n\t},\n";
+                SideTrace::output_files[i] << "\t\t\"switching_activity\": " << SideTrace::switching_activity[i] << "\n\t},\n";
+                SideTrace::switching_activity[i] = 0; // Reset for next window
             }
             SideTrace::trigger_data_flag.store(false);
         }
         return;
     }
-    else if (!SideTrace::monitor_enabled.load()) {
-        return; // Skip if the flag is false
+    
+    // Always monitor switching activity when configured
+    if (!SideTrace::monitor_enabled.load()) {
+        return; // Skip if not configured
     }
+    
+    // Accumulate switching activity for signals in monitored modules
     for (int i = 0; i < SideTrace::kNumInstances; ++i) {
         if (SideTrace::filtered_signals[i].find(code) != SideTrace::filtered_signals[i].end()) {
             SideTrace::switching_activity[i] += newval;

@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <fstream>
 
 class VerilatedSideBuffer;
 class VerilatedSideFile;
@@ -38,43 +39,32 @@ namespace SideTrace {
     extern std::string trigger_signal_name;
     
     /// Updated atomically in trace callback thread
-    std::atomic<bool> trigger_data_flag{false};
+    extern std::atomic<bool> trigger_data_flag;
     /// Updated atomically in trace callback thread
-    std::atomic<bool> prev_trigger_flag{false};
+    extern std::atomic<bool> prev_trigger_flag;
     /// Updated atomically in trace callback thread
-    std::atomic<bool> monitor_enabled{false};
-    std::uint32_t trigger_data_code = 0;
-    std::uint32_t time_window = 0;
+    extern std::atomic<bool> monitor_enabled;
+    extern std::uint32_t trigger_data_code;
+    extern std::uint32_t time_window;
 
     // Configuration functions
     void configure(const std::vector<std::string>& modules, const std::string& trigger);
     
     inline void WriteActivity(uint64_t timeui) VL_MT_SAFE {
         if (!trigger_data_flag.load()) {
-            if (kVerboseTrace) {
-                std::cout << "WriteActivity called without trigger_data_flag set.\n";
-            }
+
             // If the monitor is not enabled, we do not write anything
             monitor_enabled.store(false);
             if (prev_trigger_flag.load()) {
-                if (kVerboseTrace) {
-                    std::cout << "Writing previous trigger data.\n";
-                }
                 prev_trigger_flag.store(false);
             }
             return;
         } else {
 
             if (prev_trigger_flag.load()) {
-                if (kVerboseTrace) {
-                    std::cout << "Writing previous trigger data.\n";
-                }
                 for (int i = 0; i < kNumInstances; ++i) {
                     output_files[i] << switching_activity[i] << ",\n";
                 }
-            }
-            if (kVerboseTrace) {
-                std::cout << "WriteActivity called with trigger_data_flag set.\n";
             }
             for (int i = 0; i < kNumInstances; ++i) {
                 switching_activity[i] = 0;

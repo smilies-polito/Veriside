@@ -838,17 +838,23 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullBit(uint32_t* oldp, CData newval) {
     #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
+    #if defined(VM_TRACE_VCD) && !defined(VM_TRACE_SIDE)
     emitBit(code, newval);
+    #endif
 }
 
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullEvent(uint32_t* oldp, VlEvent newval) {
     const uint32_t code = oldp - m_sigs_oldvalp;
     #ifdef VM_TRACE_SIDE
-    emitEventSide(code, newval, *oldp);
+    // For events, we can't store VlEvent in uint32_t, so create a default old value
+    VlEvent oldval;  // Default constructed VlEvent
+    emitEventSide(code, newval, oldval);
     #endif
     *oldp = 1;  // Do we really store an "event" ?
+    #if defined(VM_TRACE_VCD) && !defined(VM_TRACE_SIDE)
     emitEvent(code, newval);
+    #endif
 }
 
 template <>
@@ -859,7 +865,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullCData(uint32_t* oldp, CData newval, int
     #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
+    #if defined(VM_TRACE_VCD) && !defined(VM_TRACE_SIDE)
     emitCData(code, newval, bits);
+    #endif
 }
 
 template <>
@@ -870,7 +878,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullSData(uint32_t* oldp, SData newval, int
     #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
+    #if defined(VM_TRACE_VCD) && !defined(VM_TRACE_SIDE)
     emitSData(code, newval, bits);
+    #endif
 }
 
 template <>
@@ -881,7 +891,9 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullIData(uint32_t* oldp, IData newval, int
     #endif
     *oldp = newval;  // Still copy even if not tracing so chg doesn't call full
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
+    #if defined(VM_TRACE_VCD) && !defined(VM_TRACE_SIDE)
     emitIData(code, newval, bits);
+    #endif
 }
 
 template <>
@@ -892,18 +904,22 @@ void VerilatedTraceBuffer<VL_BUF_T>::fullQData(uint32_t* oldp, QData newval, int
     #endif
     *reinterpret_cast<QData*>(oldp) = newval;
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
+    #if defined(VM_TRACE_VCD) && !defined(VM_TRACE_SIDE)
     emitQData(code, newval, bits);
+    #endif
 }
 
 template <>
 void VerilatedTraceBuffer<VL_BUF_T>::fullWData(uint32_t* oldp, const WData* newvalp, int bits) {
     const uint32_t code = oldp - m_sigs_oldvalp;
     #ifdef VM_TRACE_SIDE
-    emitWDataSide(code, newvalp, bits, *oldp);
+    emitWDataSide(code, newvalp, bits, oldp);
     #endif
     for (int i = 0; i < VL_WORDS_I(bits); ++i) oldp[i] = newvalp[i];
     if (VL_UNLIKELY(m_sigs_enabledp && !(VL_BITISSET_W(m_sigs_enabledp, code)))) return;
+    #if defined(VM_TRACE_VCD) && !defined(VM_TRACE_SIDE)
     emitWData(code, newvalp, bits);
+    #endif
 }
 
 template <>

@@ -536,6 +536,24 @@ public:
         // Set name of top level function
         AstCFunc* const topFuncp = m_topFuncps.front();
         topFuncp->name("trace_init_top");
+        
+        // Add SideTrace configuration for side channel analysis
+        if (v3Global.opt.traceFormat().side() && v3Global.opt.sideModules().size()) {
+            const string sideConfig = "// Configure SideTrace for side channel analysis\n"
+                "#ifdef VM_TRACE_SIDE\n"
+                "    {\n"
+                "        std::vector<std::string> modules = {";
+            string moduleStr;
+            for (const string& module : v3Global.opt.sideModules()) {
+                if (!moduleStr.empty()) moduleStr += ", ";
+                moduleStr += "\"" + module + "\"";
+            }
+            const string sideConfigFull = sideConfig + moduleStr + "};\n"
+                "        SideTrace::configure(modules, \"" + v3Global.opt.sideTrigger() + "\");\n"
+                "    }\n"
+                "#endif\n";
+            topFuncp->addInitsp(new AstCStmt{flp, sideConfigFull});
+        }
     }
     ~TraceDeclVisitor() override {
         V3Stats::addStat("Tracing, Traced signals", m_statSigs);
