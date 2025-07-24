@@ -129,7 +129,7 @@ namespace SideTrace {
         monitor_enabled.store(true);
     }
     
-    void validateConfiguration() {
+    void validateConfiguration(VerilatedSideFile* filep) {
         // Check if trigger signal was found
         if (!trigger_signal_name.empty() && !trigger_signal_found) {
             std::cerr << "ERROR: Trigger signal '" << trigger_signal_name << "' not found in any traced signals!" << std::endl;
@@ -146,15 +146,22 @@ namespace SideTrace {
             }
         }
         
-        std::cout << "Side channel configuration validated successfully:" << std::endl;
-        std::cout << "  - Trigger signal: " << trigger_signal_name << " ✓" << std::endl;
+        // Write validation info to side file
+        std::string validation_output = "Side channel configuration validated successfully:\n";
+        validation_output += "  - Trigger signal: " + trigger_signal_name + " ✓\n";
         
         // Print all filtered signals for each module
         for (size_t i = 0; i < instance_names.size(); ++i) {
-            std::cout << "  - Module: " << instance_names[i] << " ✓ (" << filtered_signals[i].size() << " signals)" << std::endl;
+            validation_output += "  - Module: " + instance_names[i] + " ✓ (" + 
+                                std::to_string(filtered_signals[i].size()) + " signals)\n";
             for (const auto& signal_pair : filtered_signals[i]) {
-                std::cout << "    * " << signal_pair.second << std::endl;
+                validation_output += "    * " + signal_pair.second + "\n";
             }
+        }
+        
+        // Write to side file
+        if (filep) {
+            filep->write(validation_output.c_str(), validation_output.length());
         }
     }
 }
@@ -553,7 +560,7 @@ void VerilatedSide::dumpHeader() {
     assert(m_modDepth == 0);
 
     // Validate side channel configuration
-    SideTrace::validateConfiguration();
+    SideTrace::validateConfiguration(m_filep);
 
     // Reclaim storage
     deleteNameMap();
