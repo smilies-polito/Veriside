@@ -850,10 +850,10 @@ void VerilatedSideBuffer::handleSwActivity(uint32_t code, uint32_t hd_hw) {
             }
             SideTrace::time_window++;
         }
-        else if(hd_hw == 0 && SideTrace::trigger_data_flag.load()){
+        else if(hd_hw >= 0 && SideTrace::trigger_data_flag.load()){
             // Write accumulated switching activity and close time window
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
-                SideTrace::output_files[i] << "\t\t\"switching_activity\": " << SideTrace::switching_activity[i] << "\n\t},\n";
+                SideTrace::output_files[i] << SideTrace::switching_activity[i] << "\n\t},\n";
                 SideTrace::switching_activity[i] = 0; // Reset for next window
             }
             SideTrace::trigger_data_flag.store(false);
