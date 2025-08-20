@@ -843,14 +843,18 @@ void VerilatedSideBuffer::finishLine(uint32_t code, char* writep) {
 void VerilatedSideBuffer::handleSwActivity(uint32_t code, uint32_t hd_hw) {
     // Check if this is the trigger signal
     if(code == SideTrace::trigger_data_code) {
-        if(hd_hw > 0 && !SideTrace::trigger_data_flag.load()){
+
+        bool start_trig = (SideTrace::use_hamming_weight && hd_hw > 0) || (!SideTrace::use_hamming_weight && hd_hw > 0);
+        bool end_trig = (SideTrace::use_hamming_weight && hd_hw == 0) || (!SideTrace::use_hamming_weight && hd_hw > 0);
+
+        if(start_trig && !SideTrace::trigger_data_flag.load()){
             SideTrace::trigger_data_flag.store(true);
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
                 SideTrace::output_files[i] << "\t\"TW_" << SideTrace::time_window << "\": {\n";
             }
             SideTrace::time_window++;
         }
-        else if(hd_hw >= 0 && SideTrace::trigger_data_flag.load()){
+        else if(end_trig && SideTrace::trigger_data_flag.load()){
             // Write accumulated switching activity and close time window
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
                 SideTrace::output_files[i] << SideTrace::switching_activity[i] << "\n\t},\n";
