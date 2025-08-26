@@ -1,93 +1,266 @@
-# Veriside
+<p align="center">
+  <img src="docs/_static/veriside_logo.png" alt="VeriSide Logo" width="100"/>
+</p>
 
+## 🛠️ Installation
 
+To install VeriSide from source, follow these steps:
 
-## Getting started
+### Prerequisites
+- GCC/Clang compiler
+- Make
+- Autotools (autoconf, automake)
+- Perl
+- Python3 (for some tests)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Installation Commands
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+```bash
+# Clone the repository
+git clone https://github.com/smilies-polito/VeriSide.git
 
-## Add your files
+# Navigate to the VeriSide directory
+cd VeriSide
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+# Set installation directory (optional)
+export VERILATOR_INSTALL_DIR=/usr/local
+
+# Configure and build
+autoconf && ./configure --prefix="$VERILATOR_INSTALL_DIR"
+
+# Compile (adjust NUM_JOBS based on your CPU cores)
+make -j${NUM_JOBS:-4}
+
+# Run tests to verify installation
+make test
+
+# Install VeriSide
+make install
 
 ```
-cd existing_repo
-git remote add origin https://gitlabtsgroup.polito.it/root/veriside.git
-git branch -M main
-git push -uf origin main
+
+---
+
+## 🔍 Usage
+
+
+**VeriSide** is a customized extension of [Verilator](https://verilator.org/), the fastest open-source Verilog/SystemVerilog simulator, designed specifically for **Power Side-Channel (PSC) Leakage Assessment at the RTL Level**.
+
+For Verilator's official documentation, tutorials, and usage, please refer to:
+- https://verilator.org/
+
+---
+
+## 🚀 What is VeriSide?
+
+VeriSide v1.0 is based on **Verilator v5.008** and introduces enhancements to enable efficient, scalable, and direct leakage assessment of RTL designs, particularly suited for pre-silicon security evaluation.
+
+VeriSide enables **direct generation of Hamming Distance (HD)** and **Hamming Weight (HW)** data during simulation, avoiding the need for post-simulation VCD or SAIF parsing, which is resource-heavy and slow for large designs.
+
+---
+
+## 🔍 Key Features in VeriSide V1.0
+- **Inline Leakage Tracing:**  
+  Direct generation of `.side` files capturing HD/HW data per simulation, eliminating VCD generation and parsing.
+
+- **Trigger and Instance Specification:**  
+  Target specific RTL instances and trigger signals for focused analysis.
+
+- **Resource Efficiency:**  
+  - 99% reduction in disk usage compared to traditional VCD-based approaches.
+  - Zero post-simulation RAM overhead for leakage data extraction.
+  - Immediate trace availability post simulation.
+
+- **Parallel Trace Collection:**  
+  Retains Verilator's multi-threaded simulation capabilities while embedding side-channel analysis.
+
+---
+
+## �️ Usage
+
+VeriSide extends Verilator with additional command line options specifically designed for side-channel analysis. To enable side-channel tracing in your RTL simulation, use the following options:
+
+### Side-Channel Analysis Options
+
+#### `--trace-side`
+Enables side-channel analysis and generation of `.side` files containing Hamming Distance (HD) and Hamming Weight (HW) data.
+
+**Usage:**
+```bash
+verilator --trace-side [other options] design.sv
 ```
 
-## Integrate with your tools
+#### `--side-trigger <signal_name>`
+Specifies the trigger signal name that controls when side-channel data collection begins. The analysis will start capturing data when this signal transitions.
 
-- [ ] [Set up project integrations](https://gitlabtsgroup.polito.it/root/veriside/-/settings/integrations)
+**Usage:**
+```bash
+verilator --trace-side --side-trigger "trigger_data_q" design.sv
+```
 
-## Collaborate with your team
+#### `--side-modules <module1,module2,...>`
+Defines a comma-separated list of module instances to monitor for side-channel analysis. Only switching activity within these specified modules will be captured in the `.side` files.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+**Usage:**
+```bash
+verilator --trace-side --side-trigger "trigger_signal" --side-modules "cpu_core,crypto_unit,cache_controller" design.sv
+```
 
-## Test and Deploy
+#### `--side-hw`
+When specified, VeriSide calculates **Hamming Weight (HW)** instead of **Hamming Distance (HD)**. By default, VeriSide computes Hamming Distance (bit transitions between old and new values). With this option, it counts the number of '1' bits in the new value only.
 
-Use the built-in continuous integration in GitLab.
+**Usage:**
+```bash
+# Calculate Hamming Weight instead of Hamming Distance
+verilator --trace-side --side-hw --side-trigger "trigger_signal" --side-modules "cpu_core" design.sv
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+# Default behavior (Hamming Distance)
+verilator --trace-side --side-trigger "trigger_signal" --side-modules "cpu_core" design.sv
+```
 
-***
+### Complete Example
 
-# Editing this README
+Here's a complete example of using VeriSide for side-channel analysis:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```bash
+verilator --trace-side \
+          --side-trigger "data_valid_q" \
+          --side-modules "ariane_core,aes_unit,mem_controller" \
+          --side-hw \
+          -cc --exe \
+          design.sv testbench.cpp
+```
 
-## Suggestions for a good README
+This command will:
+- Enable side-channel tracing (`--trace-side`)
+- Start data collection when `data_valid_q` signal triggers (`--side-trigger`)
+- Monitor switching activity in the specified modules (`--side-modules`)
+- Calculate Hamming Weight instead of Hamming Distance (`--side-hw`)
+- Generate `.side` files with HW data for leakage assessment
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Example: Ariane RISC-V Core
 
-## Name
-Choose a self-explaining name for your project.
+VeriSide includes a modified testbench example based on the Ariane RISC-V core. You can find the example in `ariane_tb.cpp`, which demonstrates how to:
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+- Set up side-channel tracing with `VerilatedSide`
+- Integrate VeriSide tracing into your existing testbench
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+**Key modifications in the example:**
+```cpp
+// Create side-channel trace file
+VerilatedSideFile* sidep = new VerilatedSideFile;
+VerilatedSide* tracep = new VerilatedSide(sidep);
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+// Enable tracing and open file
+dut->trace(tracep, 99);
+tracep->open("ariane_trace.side");
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+The `VerilatedSideFile` will contain:
+1. **VCD-like Header**: Module hierarchy and signal definitions for the entire design
+2. **Validation Information**: List of all filtered signals for each module specified by `--side-modules`
+3. **Signal Mapping**: Shows exactly which signals are being monitored in each target module
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+**Example output structure:**
+```
+$version Generated by VerilatedSide $end
+$timescale 1ps $end
+$scope module TOP $end
+$scope module ariane_testharness $end
+...
+$enddefinitions $end
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Side channel configuration validated successfully:
+  - Trigger signal: trigger_data_q ✓
+  - Module: ariane_core ✓ (127 signals)
+    * TOP.ariane_testharness.dut.i_ariane.clk_i
+    * TOP.ariane_testharness.dut.i_ariane.rst_ni
+    * TOP.ariane_testharness.dut.i_ariane.i_frontend.flush_i
+    ...
+  - Module: cache_subsystem ✓ (89 signals)
+    * TOP.ariane_testharness.dut.i_ariane.i_cache_subsystem.clk_i
+    * TOP.ariane_testharness.dut.i_ariane.i_cache_subsystem.icache_en_i
+    ...
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+See `ariane_tb.cpp` for the complete implementation example.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Important Notes
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+- **Both `--side-trigger` and `--side-modules` are required** when using `--trace-side`
+- Module names should match the instance names in your RTL hierarchy
+- The trigger signal should be a valid signal name accessible in your design
+- Use `--side-hw` for Hamming Weight calculation, otherwise Hamming Distance is computed by default
+- Generated `.side` files will be created in the same directory as your simulation executable
+- VeriSide will validate that all specified modules and trigger signals exist in your design
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Output File Structure
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+VeriSide generates two types of files during simulation:
 
-## License
-For open source projects, say how it is licensed.
+#### 1. **Main Trace File** (e.g., `ariane_trace.side`)
+Contains a VCD-like header with module hierarchy and signal definitions, followed by validation information showing which signals were filtered for each specified module.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+#### 2. **Module-Specific JSON Files** (e.g., `module_name.side`)
+Individual JSON files for each module specified in `--side-modules`, containing switching activity data segmented into time windows.  
+Each time window is defined by the trigger signal: a new window starts when the trigger becomes non-zero, and the window ends when the trigger returns
+
+**JSON Format Example:**
+```json
+{
+  "TW_0": {
+    "34428": 0,
+    "34429": 10,
+    "34430": 25
+  },
+  "TW_1": {
+    "35000": 2,
+    "35001": 0,
+    "35002": 7
+  }
+}
+```
+
+The JSON file contains time-windowed switching activity data. Each top-level key (e.g., `"TW_0"`, `"TW_1"`) represents a time window. Inside each window, the keys are simulation time points, and the values are the measured switching activity (e.g., Hamming Distance or Hamming Weight) at that time. This structure allows you to analyze detailed switching activity per time window and per simulation cycle.
+
+The JSON format makes it easy to parse and analyze the data using Python, MATLAB, or any other tool that supports JSON:
+
+```python
+import json
+
+# Load switching activity data
+with open('ariane_core.side', 'r') as f:
+    data = json.load(f)
+
+# Extract switching activity per time window
+for window, metrics in data.items():
+    print(f"{window}: {metrics['switching_activity']} transitions")
+```
+
+---
+
+## 📖 Citation
+
+If you use VeriSide in your research or projects, please **cite the following publication**:
+
+```bibtex
+B. Farnaghinejad, A. Porsia, A. Ruospo, A. Savino, S. Di Carlo, and E. Sanchez, "Late Contribution: VeriSide: A Modified Verilator for Leakage Assessment at the RTL Level," in 2025 IEEE 26th Latin American Test Symposium (LATS), Mar. 2025, pp. 1–2. doi: 10.1109/LATS65346.2025.10963943.
+
+```
+
+You can also access the paper here:  
+👉 [https://ieeexplore.ieee.org/document/10963943](https://ieeexplore.ieee.org/document/10963943)
+
+**Performance details** and comprehensive evaluation results comparing VeriSide with traditional VCD-based approaches can be found in the cited paper.
+
+---
+
+## 📬 Contributions & Support
+
+We welcome contributions, feature requests, and bug reports!  
+Please open an **issue** on this repository.
+
+---
+
+## 📜 License
+VeriSide inherits Verilator’s licensing.
