@@ -98,7 +98,7 @@ class VerilatedVarNameMap;
 class VerilatedVcd;
 class VerilatedVcdC;
 class VerilatedVcdSc;
-//add side channel tracing
+// add side channel tracing
 class VerilatedSide;
 class VerilatedSideC;
 

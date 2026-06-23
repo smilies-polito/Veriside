@@ -21,7 +21,7 @@
 //
 // This file is part of VeriSide, a modified version of Verilator for
 // power side-channel analysis.
-// 
+//
 //*************************************************************************
 
 #include "config_build.h"
@@ -862,7 +862,6 @@ void V3Options::notify() {
         // With --trace and --trace-side, --trace-threads is ignored
         if (traceFormat().vcd()) m_traceThreads = threads() ? 1 : 0;
         if (traceFormat().side()) m_traceThreads = threads() ? 1 : 0;
-
     }
 
     UASSERT(!(useTraceParallel() && useTraceOffload()),
@@ -1497,9 +1496,7 @@ void V3Options::parseOptsList(FileLine* fl, const string& optdir, int argc, char
         addLdLibs("-lz");
     });
 
-    DECL_OPTION("-side-trigger", CbVal, [this](const char* valp) {
-        m_sideTrigger = valp;
-    });
+    DECL_OPTION("-side-trigger", CbVal, [this](const char* valp) { m_sideTrigger = valp; });
 
     DECL_OPTION("-side-modules", CbVal, [this](const char* valp) {
         // Split comma-separated module names

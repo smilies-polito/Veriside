@@ -8,8 +8,8 @@
 //
 // This file is part of VeriSide, a modified version of Verilator for
 // power side-channel analysis.
-// 
-// Copyright 2025 by Behnam Farnaghinejad. 
+//
+// Copyright 2025 by Behnam Farnaghinejad.
 //
 //=============================================================================
 ///
@@ -26,10 +26,10 @@
 #include "verilated.h"
 #include "verilated_trace.h"
 
+#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
-#include <fstream>
 
 class VerilatedSideBuffer;
 class VerilatedSideFile;
@@ -37,57 +37,54 @@ class VerilatedSideFile;
 //=============================================================================
 
 namespace SideTrace {
-    static constexpr bool kVerboseTrace = false;
-    constexpr std::streamoff kTrimTrailingComma = -2;
-    
-    // Dynamic configuration from command line options
-    extern int kNumInstances;
-    extern std::vector<std::ofstream> output_files;
-    extern std::vector<std::string> instance_names;
-    extern std::vector<std::unordered_map<uint32_t, std::string>> filtered_signals;
-    extern std::vector<std::uint32_t> switching_activity;
-    extern std::string trigger_signal_name;
-    
-    /// Updated atomically in trace callback thread
-    extern std::atomic<bool> trigger_data_flag;
-    /// Updated atomically in trace callback thread
-    extern std::atomic<bool> prev_trigger_flag;
-    /// Updated atomically in trace callback thread
-    extern std::atomic<bool> monitor_enabled;
-    extern std::uint32_t trigger_data_code;
-    extern std::uint32_t time_window;
+static constexpr bool kVerboseTrace = false;
+constexpr std::streamoff kTrimTrailingComma = -2;
 
-    // Configuration functions
-    void configure(const std::vector<std::string>& modules, const std::string& trigger, bool hammingWeight = false);
-    void validateConfiguration(VerilatedSideFile* filep);
+// Dynamic configuration from command line options
+extern int kNumInstances;
+extern std::vector<std::ofstream> output_files;
+extern std::vector<std::string> instance_names;
+extern std::vector<std::unordered_map<uint32_t, std::string>> filtered_signals;
+extern std::vector<std::uint32_t> switching_activity;
+extern std::string trigger_signal_name;
 
-    inline void WriteActivity(uint64_t timeui) VL_MT_SAFE {
-        if (!trigger_data_flag.load()) {
+/// Updated atomically in trace callback thread
+extern std::atomic<bool> trigger_data_flag;
+/// Updated atomically in trace callback thread
+extern std::atomic<bool> prev_trigger_flag;
+/// Updated atomically in trace callback thread
+extern std::atomic<bool> monitor_enabled;
+extern std::uint32_t trigger_data_code;
+extern std::uint32_t time_window;
 
-            // If the monitor is not enabled, we do not write anything
-            monitor_enabled.store(false);
-            if (prev_trigger_flag.load()) {
-                prev_trigger_flag.store(false);
-            }
-            return;
-        } else {
+// Configuration functions
+void configure(const std::vector<std::string>& modules, const std::string& trigger,
+               bool hammingWeight = false);
+void validateConfiguration(VerilatedSideFile* filep);
 
-            if (prev_trigger_flag.load()) {
-                for (int i = 0; i < kNumInstances; ++i) {
-                    output_files[i] << switching_activity[i] << ",\n";
-                }
-            }
+inline void WriteActivity(uint64_t timeui) VL_MT_SAFE {
+    if (!trigger_data_flag.load()) {
+
+        // If the monitor is not enabled, we do not write anything
+        monitor_enabled.store(false);
+        if (prev_trigger_flag.load()) { prev_trigger_flag.store(false); }
+        return;
+    } else {
+
+        if (prev_trigger_flag.load()) {
             for (int i = 0; i < kNumInstances; ++i) {
-                switching_activity[i] = 0;
+                output_files[i] << switching_activity[i] << ",\n";
             }
-            prev_trigger_flag.store(true);
-            for (int i = 0; i < kNumInstances; ++i) {
-                output_files[i] << "\t\t\"" << timeui << "\": ";
-            }
-            monitor_enabled.store(true);
         }
+        for (int i = 0; i < kNumInstances; ++i) { switching_activity[i] = 0; }
+        prev_trigger_flag.store(true);
+        for (int i = 0; i < kNumInstances; ++i) {
+            output_files[i] << "\t\t\"" << timeui << "\": ";
+        }
+        monitor_enabled.store(true);
     }
 }
+}  // namespace SideTrace
 //=============================================================================
 // VerilatedSide
 // Base class to create a Verilator SIDE dump
@@ -270,13 +267,14 @@ class VerilatedSideBuffer VL_NOT_FINAL {
     VL_ATTR_ALWINLINE void emitSDataSide(uint32_t code, SData newval, int bits, SData oldval = 0);
     VL_ATTR_ALWINLINE void emitIDataSide(uint32_t code, IData newval, int bits, IData oldval = 0);
     VL_ATTR_ALWINLINE void emitQDataSide(uint32_t code, QData newval, int bits, QData oldval = 0);
-    VL_ATTR_ALWINLINE void emitWDataSide(uint32_t code, const WData* newvalp, int bits, const WData* oldvalp = nullptr);
+    VL_ATTR_ALWINLINE void emitWDataSide(uint32_t code, const WData* newvalp, int bits,
+                                         const WData* oldvalp = nullptr);
     VL_ATTR_ALWINLINE void emitDouble(uint32_t code, double newval);
 
     //=========================================================================
     // Private methods
-  private:
-    void handleSwActivity(uint32_t code, uint32_t newval);    
+private:
+    void handleSwActivity(uint32_t code, uint32_t newval);
 };
 
 //=============================================================================

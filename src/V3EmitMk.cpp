@@ -21,7 +21,7 @@
 //
 // This file is part of VeriSide, a modified version of Verilator for
 // power side-channel analysis.
-// 
+//
 //*************************************************************************
 
 #include "config_build.h"

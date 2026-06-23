@@ -8,8 +8,8 @@
 //
 // This file is part of VeriSide, a modified version of Verilator for
 // power side-channel analysis.
-// 
-// Copyright 2025 by Behnam Farnaghinejad. 
+//
+// Copyright 2025 by Behnam Farnaghinejad.
 //
 //=============================================================================
 ///
@@ -87,86 +87,92 @@ static size_t roundUpToMultipleOf(size_t value) {
 // SideTrace namespace implementation
 
 namespace SideTrace {
-    // Dynamic configuration variables
-    int kNumInstances = 0;
-    std::vector<std::ofstream> output_files;
-    std::vector<std::string> instance_names;
-    std::vector<std::unordered_map<uint32_t, std::string>> filtered_signals;
-    std::vector<std::uint32_t> switching_activity;
-    std::string trigger_signal_name;
-    
-    // Atomic variables for trace thread synchronization
-    std::atomic<bool> trigger_data_flag{false};
-    std::atomic<bool> prev_trigger_flag{false};
-    std::atomic<bool> monitor_enabled{false};
-    std::uint32_t trigger_data_code = 0;
-    std::uint32_t time_window = 0;
-    
-    // Hamming distance vs hamming weight flag
-    bool use_hamming_weight = false;
-    
-    // Validation tracking
-    bool trigger_signal_found = false;
-    std::vector<bool> modules_found;
+// Dynamic configuration variables
+int kNumInstances = 0;
+std::vector<std::ofstream> output_files;
+std::vector<std::string> instance_names;
+std::vector<std::unordered_map<uint32_t, std::string>> filtered_signals;
+std::vector<std::uint32_t> switching_activity;
+std::string trigger_signal_name;
 
-    void configure(const std::vector<std::string>& modules, const std::string& trigger, bool hammingWeight) {
-        kNumInstances = modules.size();
-        instance_names = modules;
-        trigger_signal_name = trigger;
-        use_hamming_weight = hammingWeight;
+// Atomic variables for trace thread synchronization
+std::atomic<bool> trigger_data_flag{false};
+std::atomic<bool> prev_trigger_flag{false};
+std::atomic<bool> monitor_enabled{false};
+std::uint32_t trigger_data_code = 0;
+std::uint32_t time_window = 0;
 
-        // Resize all vectors
-        output_files.resize(kNumInstances);
-        filtered_signals.resize(kNumInstances);
-        switching_activity.resize(kNumInstances);
-        
-        // Initialize tracking vectors
-        modules_found.resize(kNumInstances, false);
-        trigger_signal_found = false;
-        
-        // Initialize switching activity to 0
-        std::fill(switching_activity.begin(), switching_activity.end(), 0);
-        
-        // Enable monitoring when configuration is set
-        monitor_enabled.store(true);
+// Hamming distance vs hamming weight flag
+bool use_hamming_weight = false;
+
+// Validation tracking
+bool trigger_signal_found = false;
+std::vector<bool> modules_found;
+
+void configure(const std::vector<std::string>& modules, const std::string& trigger,
+               bool hammingWeight) {
+    kNumInstances = modules.size();
+    instance_names = modules;
+    trigger_signal_name = trigger;
+    use_hamming_weight = hammingWeight;
+
+    // Resize all vectors
+    output_files.resize(kNumInstances);
+    filtered_signals.resize(kNumInstances);
+    switching_activity.resize(kNumInstances);
+
+    // Initialize tracking vectors
+    modules_found.resize(kNumInstances, false);
+    trigger_signal_found = false;
+
+    // Initialize switching activity to 0
+    std::fill(switching_activity.begin(), switching_activity.end(), 0);
+
+    // Enable monitoring when configuration is set
+    monitor_enabled.store(true);
+}
+
+void validateConfiguration(VerilatedSideFile* filep) {
+    // Check if trigger signal was found
+    if (!trigger_signal_name.empty() && !trigger_signal_found) {
+        std::cerr << "ERROR: Trigger signal '" << trigger_signal_name
+                  << "' not found in any traced signals!" << std::endl;
+        std::cerr
+            << "Make sure the trigger signal name matches exactly with a signal in your design."
+            << std::endl;
+        exit(1);
     }
-    
-    void validateConfiguration(VerilatedSideFile* filep) {
-        // Check if trigger signal was found
-        if (!trigger_signal_name.empty() && !trigger_signal_found) {
-            std::cerr << "ERROR: Trigger signal '" << trigger_signal_name << "' not found in any traced signals!" << std::endl;
-            std::cerr << "Make sure the trigger signal name matches exactly with a signal in your design." << std::endl;
+
+    // Check if all required modules were found
+    for (size_t i = 0; i < instance_names.size(); ++i) {
+        if (!modules_found[i]) {
+            std::cerr << "ERROR: Module '" << instance_names[i]
+                      << "' not found in any traced signals!" << std::endl;
+            std::cerr << "Make sure the module name matches exactly with a module in your design."
+                      << std::endl;
             exit(1);
         }
-        
-        // Check if all required modules were found
-        for (size_t i = 0; i < instance_names.size(); ++i) {
-            if (!modules_found[i]) {
-                std::cerr << "ERROR: Module '" << instance_names[i] << "' not found in any traced signals!" << std::endl;
-                std::cerr << "Make sure the module name matches exactly with a module in your design." << std::endl;
-                exit(1);
-            }
-        }
-        
-        // Validation passed - no file writing here anymore
     }
-    
-    std::string generateValidationOutput() {
-        std::string validation_output = "\n\nSide channel configuration validated successfully:\n";
-        validation_output += "  - Trigger signal: " + trigger_signal_name + " ✓\n";
-        
-        // Print all filtered signals for each module
-        for (size_t i = 0; i < instance_names.size(); ++i) {
-            validation_output += "  - Module: " + instance_names[i] + " ✓ (" + 
-                                std::to_string(filtered_signals[i].size()) + " signals)\n";
-            for (const auto& signal_pair : filtered_signals[i]) {
-                validation_output += "    * " + signal_pair.second + "\n";
-            }
-        }
-        
-        return validation_output;
-    }
+
+    // Validation passed - no file writing here anymore
 }
+
+std::string generateValidationOutput() {
+    std::string validation_output = "\n\nSide channel configuration validated successfully:\n";
+    validation_output += "  - Trigger signal: " + trigger_signal_name + " ✓\n";
+
+    // Print all filtered signals for each module
+    for (size_t i = 0; i < instance_names.size(); ++i) {
+        validation_output += "  - Module: " + instance_names[i] + " ✓ ("
+                             + std::to_string(filtered_signals[i].size()) + " signals)\n";
+        for (const auto& signal_pair : filtered_signals[i]) {
+            validation_output += "    * " + signal_pair.second + "\n";
+        }
+    }
+
+    return validation_output;
+}
+}  // namespace SideTrace
 
 //=============================================================================
 // VerilatedSideFile
@@ -276,9 +282,7 @@ bool VerilatedSide::preChangeDump() {
     return isOpen();
 }
 
-void VerilatedSide::emitTimeChange(uint64_t timeui) {
-    SideTrace::WriteActivity(timeui);
-}
+void VerilatedSide::emitTimeChange(uint64_t timeui) { SideTrace::WriteActivity(timeui); }
 
 void VerilatedSide::makeNameMap() {
     // Take signal information from each module and build m_namemapp
@@ -363,7 +367,7 @@ void VerilatedSide::close() VL_MT_SAFE_EXCLUDES(m_mutex) {
     // This function is on the flush() call path
     const VerilatedLockGuard lock{m_mutex};
     if (!isOpen()) return;
-    
+
     closePrev();
     // closePrev() called Super::flush(), so we just
     // need to shut down the tracing thread here.
@@ -585,7 +589,7 @@ void VerilatedSide::dumpHeader() {
 //=============================================================================
 
 void VerilatedSide::declare(uint32_t code, const char* name, const char* wirep, bool array,
-                           int arraynum, bool tri, bool bussed, int msb, int lsb) {
+                            int arraynum, bool tri, bool bussed, int msb, int lsb) {
     const int bits = ((msb > lsb) ? (msb - lsb) : (lsb - msb)) + 1;
 
     const bool enabled = Super::declCode(code, name, bits, tri);
@@ -612,17 +616,15 @@ void VerilatedSide::declare(uint32_t code, const char* name, const char* wirep, 
     std::string basename;
 
     for (const auto& name : SideTrace::instance_names) {
-        // Match only if 'nameasstr' contains 'name' as a whole word (not as a substring of another word)
-        // We check that the match is either at the start or preceded by a space,
-        // and is either at the end or followed by a space/tab/NULL.
+        // Match only if 'nameasstr' contains 'name' as a whole word (not as a substring of another
+        // word) We check that the match is either at the start or preceded by a space, and is
+        // either at the end or followed by a space/tab/NULL.
         size_t pos = nameasstr.find(name);
         while (pos != std::string::npos) {
             bool at_start = (pos == 0) || (nameasstr[pos - 1] == ' ');
             size_t after = pos + name.length();
-            bool at_end = (after == nameasstr.length()) ||
-                          (nameasstr[after] == ' ') ||
-                          (nameasstr[after] == '\t') ||
-                          (nameasstr[after] == '\0');
+            bool at_end = (after == nameasstr.length()) || (nameasstr[after] == ' ')
+                          || (nameasstr[after] == '\t') || (nameasstr[after] == '\0');
             if (at_start && at_end) {
                 size_t module_index = &name - &SideTrace::instance_names[0];
                 SideTrace::filtered_signals[module_index][code] = nameasstr;
@@ -633,7 +635,8 @@ void VerilatedSide::declare(uint32_t code, const char* name, const char* wirep, 
         }
     }
 
-    if (!SideTrace::trigger_signal_name.empty() && nameasstr.find(SideTrace::trigger_signal_name) != std::string::npos) {
+    if (!SideTrace::trigger_signal_name.empty()
+        && nameasstr.find(SideTrace::trigger_signal_name) != std::string::npos) {
         SideTrace::trigger_data_code = code;
         SideTrace::trigger_signal_found = true;  // Mark trigger as found
     }
@@ -697,15 +700,15 @@ void VerilatedSide::declBit(uint32_t code, const char* name, bool array, int arr
     declare(code, name, "wire", array, arraynum, false, false, 0, 0);
 }
 void VerilatedSide::declBus(uint32_t code, const char* name, bool array, int arraynum, int msb,
-                           int lsb) {
-    declare(code, name, "wire", array, arraynum, false, true, msb, lsb);
-}
-void VerilatedSide::declQuad(uint32_t code, const char* name, bool array, int arraynum, int msb,
                             int lsb) {
     declare(code, name, "wire", array, arraynum, false, true, msb, lsb);
 }
-void VerilatedSide::declArray(uint32_t code, const char* name, bool array, int arraynum, int msb,
+void VerilatedSide::declQuad(uint32_t code, const char* name, bool array, int arraynum, int msb,
                              int lsb) {
+    declare(code, name, "wire", array, arraynum, false, true, msb, lsb);
+}
+void VerilatedSide::declArray(uint32_t code, const char* name, bool array, int arraynum, int msb,
+                              int lsb) {
     declare(code, name, "wire", array, arraynum, false, true, msb, lsb);
 }
 void VerilatedSide::declDouble(uint32_t code, const char* name, bool array, int arraynum) {
@@ -770,7 +773,7 @@ void VerilatedSide::commitTraceBuffer(VerilatedSide::Buffer* bufp) {
 // Trace rendering primitives
 
 static void VerilatedSideCCopyAndAppendNewLine(char* writep,
-                                              const char* suffixp) VL_ATTR_NO_SANITIZE_ALIGN;
+                                               const char* suffixp) VL_ATTR_NO_SANITIZE_ALIGN;
 
 static void VerilatedSideCCopyAndAppendNewLine(char* writep, const char* suffixp) {
     // Copy the whole suffix (this avoid having hard to predict branches which
@@ -842,32 +845,33 @@ void VerilatedSideBuffer::finishLine(uint32_t code, char* writep) {
 /// Filters signals and accumulates switching activity
 void VerilatedSideBuffer::handleSwActivity(uint32_t code, uint32_t hd_hw) {
     // Check if this is the trigger signal
-    if(code == SideTrace::trigger_data_code) {
+    if (code == SideTrace::trigger_data_code) {
 
-        bool start_trig = (SideTrace::use_hamming_weight && hd_hw > 0) || (!SideTrace::use_hamming_weight && hd_hw > 0);
-        bool end_trig = (SideTrace::use_hamming_weight && hd_hw == 0) || (!SideTrace::use_hamming_weight && hd_hw > 0);
+        bool start_trig = (SideTrace::use_hamming_weight && hd_hw > 0)
+                          || (!SideTrace::use_hamming_weight && hd_hw > 0);
+        bool end_trig = (SideTrace::use_hamming_weight && hd_hw == 0)
+                        || (!SideTrace::use_hamming_weight && hd_hw > 0);
 
-        if(start_trig && !SideTrace::trigger_data_flag.load()){
+        if (start_trig && !SideTrace::trigger_data_flag.load()) {
             SideTrace::trigger_data_flag.store(true);
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
                 SideTrace::output_files[i] << "\t\"TW_" << SideTrace::time_window << "\": {\n";
             }
             SideTrace::time_window++;
-        }
-        else if(end_trig && SideTrace::trigger_data_flag.load()){
+        } else if (end_trig && SideTrace::trigger_data_flag.load()) {
             // Write accumulated switching activity and close time window
             for (int i = 0; i < SideTrace::kNumInstances; ++i) {
                 SideTrace::output_files[i] << SideTrace::switching_activity[i] << "\n\t},\n";
-                SideTrace::switching_activity[i] = 0; // Reset for next window
+                SideTrace::switching_activity[i] = 0;  // Reset for next window
             }
             SideTrace::trigger_data_flag.store(false);
         }
         return;
     }
-    
+
     // Always monitor switching activity when configured
     if (!SideTrace::monitor_enabled.load()) {
-        return; // Skip if not configured
+        return;  // Skip if not configured
     }
 
     // Accumulate switching activity for signals in monitored modules
@@ -900,7 +904,7 @@ void VerilatedSideBuffer::emitBitSide(uint32_t code, CData newval, CData oldval)
     } else {
         sw_activity = newval ^ oldval;  // XOR for hamming distance
     }
-    sw_activity = __builtin_popcount(sw_activity); // Count 1s
+    sw_activity = __builtin_popcount(sw_activity);  // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
@@ -913,7 +917,7 @@ void VerilatedSideBuffer::emitCDataSide(uint32_t code, CData newval, int bits, C
     } else {
         sw_activity = newval ^ oldval;  // XOR for hamming distance
     }
-    sw_activity = __builtin_popcount(sw_activity); // Count 1s
+    sw_activity = __builtin_popcount(sw_activity);  // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
@@ -926,7 +930,7 @@ void VerilatedSideBuffer::emitSDataSide(uint32_t code, SData newval, int bits, S
     } else {
         sw_activity = newval ^ oldval;  // XOR for hamming distance
     }
-    sw_activity = __builtin_popcount(sw_activity); // Count 1s
+    sw_activity = __builtin_popcount(sw_activity);  // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
@@ -939,7 +943,7 @@ void VerilatedSideBuffer::emitIDataSide(uint32_t code, IData newval, int bits, I
     } else {
         sw_activity = newval ^ oldval;  // XOR for hamming distance
     }
-    sw_activity = __builtin_popcount(sw_activity); // Count 1s
+    sw_activity = __builtin_popcount(sw_activity);  // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
@@ -952,12 +956,13 @@ void VerilatedSideBuffer::emitQDataSide(uint32_t code, QData newval, int bits, Q
     } else {
         sw_activity = newval ^ oldval;  // XOR for hamming distance
     }
-    sw_activity = __builtin_popcountll(sw_activity); // Count 1s
+    sw_activity = __builtin_popcountll(sw_activity);  // Count 1s
     handleSwActivity(code, sw_activity);
 }
 
 VL_ATTR_ALWINLINE
-void VerilatedSideBuffer::emitWDataSide(uint32_t code, const WData* newvalp, int bits, const WData* oldvalp) {
+void VerilatedSideBuffer::emitWDataSide(uint32_t code, const WData* newvalp, int bits,
+                                        const WData* oldvalp) {
     // Calculate switching activity based on configuration
     uint32_t total_activity = 0;
     int words = VL_WORDS_I(bits);
@@ -975,9 +980,9 @@ void VerilatedSideBuffer::emitWDataSide(uint32_t code, const WData* newvalp, int
 
 VL_ATTR_ALWINLINE
 void VerilatedSideBuffer::emitDouble(uint32_t code, double newval) {
-//     char* wp = m_writep;
-//     // Buffer can't overflow before VL_SNPRINTF; we sized during declaration
-//     VL_SNPRINTF(wp, m_maxSignalBytes, "r%.16g", newval);
-//     wp += std::strlen(wp);
-//     finishLine(code, wp);
+    //     char* wp = m_writep;
+    //     // Buffer can't overflow before VL_SNPRINTF; we sized during declaration
+    //     VL_SNPRINTF(wp, m_maxSignalBytes, "r%.16g", newval);
+    //     wp += std::strlen(wp);
+    //     finishLine(code, wp);
 }

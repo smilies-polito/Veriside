@@ -21,7 +21,7 @@
 //
 // This file is part of VeriSide, a modified version of Verilator for
 // power side-channel analysis.
-// 
+//
 //*************************************************************************
 
 #ifndef VERILATOR_V3OPTIONS_H_
@@ -553,7 +553,8 @@ public:
     int traceThreads() const { return m_traceThreads; }
     bool useTraceOffload() const { return trace() && traceFormat().fst() && traceThreads() > 1; }
     bool useTraceParallel() const {
-        return trace() && (traceFormat().vcd() || traceFormat().side()) && threads() && (threads() > 1 || hierChild() > 1);
+        return trace() && (traceFormat().vcd() || traceFormat().side()) && threads()
+               && (threads() > 1 || hierChild() > 1);
     }
     bool useFstWriterThread() const { return traceThreads() && traceFormat().fst(); }
     unsigned vmTraceThreads() const {
@@ -593,7 +594,7 @@ public:
     string xAssign() const { return m_xAssign; }
     string xInitial() const { return m_xInitial; }
     string xmlOutput() const { return m_xmlOutput; }
-    
+
     // Side channel analysis accessors
     string sideTrigger() const { return m_sideTrigger; }
     const V3StringList& sideModules() const { return m_sideModules; }
